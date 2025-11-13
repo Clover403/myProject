@@ -5,6 +5,11 @@ const { User } = require('../../models');
 // Supports both session-based (Passport) and JWT token-based authentication
 const requireAuth = async (req, res, next) => {
   try {
+    // Skip auth check for OPTIONS (CORS preflight)
+    if (req.method === 'OPTIONS') {
+      return next();
+    }
+
     // Check session first (Passport session auth)
     if (req.user) {
       return next();

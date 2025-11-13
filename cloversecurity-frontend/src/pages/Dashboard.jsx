@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { scanAPI } from "../services/api";
+import { scanAPI, targetAPI } from "../services/api";
 import Navbar from "../components/Navbar";
 import { useTheme } from "../context/ThemeContext";
 import {
@@ -11,12 +11,24 @@ import {
   TrendingUp,
   Zap,
   Activity,
+  Plus,
+  Globe,
+  AlertCircle,
 } from "lucide-react";
 
 function Dashboard() {
   const [stats, setStats] = useState(null);
   const [recentScans, setRecentScans] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showAddTargetModal, setShowAddTargetModal] = useState(false);
+  const [targetFormData, setTargetFormData] = useState({
+    url: "",
+    name: "",
+    description: "",
+    tags: "",
+  });
+  const [addingTarget, setAddingTarget] = useState(false);
+  const [addTargetError, setAddTargetError] = useState("");
   const { isDark } = useTheme();
 
   useEffect(() => {
@@ -56,6 +68,32 @@ function Dashboard() {
       low: "bg-blue-100 text-blue-800 border-blue-200",
     };
     return colors[severity] || "bg-gray-100 text-gray-800 border-gray-200";
+  };
+
+  const handleAddTarget = async (e) => {
+    e.preventDefault();
+    setAddingTarget(true);
+    setAddTargetError("");
+
+    try {
+      const targetData = {
+        ...targetFormData,
+        tags: targetFormData.tags
+          ? targetFormData.tags.split(",").map((t) => t.trim())
+          : [],
+      };
+
+      await targetAPI.createTarget(targetData);
+      
+      setShowAddTargetModal(false);
+      setTargetFormData({ url: "", name: "", description: "", tags: "" });
+      
+      // Success - could add notification here
+    } catch (error) {
+      setAddTargetError(error.response?.data?.error || "Failed to add target");
+    } finally {
+      setAddingTarget(false);
+    }
   };
 
   const getStatusIcon = (status) => {
@@ -146,7 +184,91 @@ function Dashboard() {
             ))}
           </div>
 
-          {/* Recent Scans Table */}
+          {/* Quick Add Target Section */}
+          <div className={`border rounded-xl shadow-lg overflow-hidden ${isDark ? "bg-[#1a1d24] border-[#2a2e38]" : "bg-gray-50 border-gray-200"}`}>
+            <div className={`px-6 py-4 border-b ${isDark ? "border-[#2a2e38]" : "border-gray-200"}`}>
+              <h2 className={`text-xl font-semibold flex items-center gap-2 ${isDark ? "text-white" : "text-gray-900"}`}>
+                <Plus className="w-5 h-5 text-[#3ecf8e]" />
+                Quick Add Target
+              </h2>
+              <p className={`text-sm mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                Add a new target directly from dashboard
+              </p>
+            </div>
+
+            <div className={`px-6 py-6 ${isDark ? "bg-[#0f1117]/50" : "bg-white"}`}>
+              <form onSubmit={handleAddTarget} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                    Website URL
+                  </label>
+                  <div className="relative">
+                    <Globe className={`absolute left-3 top-3.5 w-4 h-4 ${isDark ? "text-gray-600" : "text-gray-400"}`} />
+                    <input
+                      type="url"
+                      value={targetFormData.url}
+                      onChange={(e) => setTargetFormData({ ...targetFormData, url: e.target.value })}
+                      placeholder="https://example.com"
+                      required
+                      className={`w-full pl-9 pr-3 py-2.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition ${isDark ? "bg-[#1a1d24] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                    Target Name
+                  </label>
+                  <input
+                    type="text"
+                    value={targetFormData.name}
+                    onChange={(e) => setTargetFormData({ ...targetFormData, name: e.target.value })}
+                    placeholder="e.g., Production"
+                    required
+                    className={`w-full px-3 py-2.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition ${isDark ? "bg-[#1a1d24] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                    Tags
+                  </label>
+                  <input
+                    type="text"
+                    value={targetFormData.tags}
+                    onChange={(e) => setTargetFormData({ ...targetFormData, tags: e.target.value })}
+                    placeholder="e.g., production"
+                    className={`w-full px-3 py-2.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition ${isDark ? "bg-[#1a1d24] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
+                  />
+                </div>
+
+                <div className="flex items-end gap-2">
+                  <button
+                    type="submit"
+                    disabled={addingTarget}
+                    className="flex-1 bg-[#3ecf8e] hover:bg-[#52ffb2] text-black font-semibold py-2.5 rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Target
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddTargetModal(true)}
+                    className={`px-3 py-2.5 text-sm rounded-lg border font-semibold transition ${isDark ? "border-[#2a2e38] text-gray-300 hover:bg-[#2a2e38]" : "border-gray-300 text-gray-700 hover:bg-gray-100"}`}
+                  >
+                    Details
+                  </button>
+                </div>
+              </form>
+
+              {addTargetError && (
+                <div className={`mt-4 p-3 rounded-lg flex items-start gap-3 ${isDark ? "bg-red-500/20 border border-red-500/30" : "bg-red-50 border border-red-200"}`}>
+                  <AlertCircle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isDark ? "text-red-400" : "text-red-600"}`} />
+                  <p className={isDark ? "text-red-300 text-sm" : "text-red-700 text-sm"}>{addTargetError}</p>
+                </div>
+              )}
+            </div>
+          </div>
           <div className={`border rounded-xl shadow-lg overflow-hidden ${isDark ? "bg-[#1a1d24] border-[#2a2e38]" : "bg-gray-50 border-gray-200"}`}>
             {/* Table Header */}
             <div className={`px-6 py-4 border-b ${isDark ? "border-[#2a2e38]" : "border-gray-200"}`}>
@@ -269,6 +391,104 @@ function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Add Target Modal (Detailed Form) */}
+      {showAddTargetModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className={`rounded-2xl max-w-2xl w-full shadow-2xl border ${isDark ? "bg-[#1a1d24] border-[#2a2e38]" : "bg-white border-gray-200"}`}>
+            {/* Header */}
+            <div className={`p-6 border-b ${isDark ? "border-[#2a2e38] bg-[#0f1117]/50" : "border-gray-200 bg-gray-50"}`}>
+              <h2 className={`text-2xl font-bold flex items-center gap-3 ${isDark ? "text-white" : "text-gray-900"}`}>
+                <Globe className="w-6 h-6 text-[#3ecf8e]" />
+                Add Target Details
+              </h2>
+            </div>
+
+            <form onSubmit={handleAddTarget} className="p-6 space-y-5">
+              <div>
+                <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-gray-200" : "text-gray-800"}`}>
+                  Website URL *
+                </label>
+                <div className="relative">
+                  <Globe className={`absolute left-3 top-3.5 w-5 h-5 ${isDark ? "text-gray-500" : "text-gray-400"}`} />
+                  <input
+                    type="url"
+                    value={targetFormData.url}
+                    onChange={(e) => setTargetFormData({ ...targetFormData, url: e.target.value })}
+                    placeholder="https://example.com"
+                    required
+                    className={`w-full pl-10 pr-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition ${isDark ? "bg-[#0f1117] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-gray-200" : "text-gray-800"}`}>
+                  Target Name *
+                </label>
+                <input
+                  type="text"
+                  value={targetFormData.name}
+                  onChange={(e) => setTargetFormData({ ...targetFormData, name: e.target.value })}
+                  placeholder="e.g., Production Website"
+                  required
+                  className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition ${isDark ? "bg-[#0f1117] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-gray-200" : "text-gray-800"}`}>
+                  Description (Optional)
+                </label>
+                <textarea
+                  value={targetFormData.description}
+                  onChange={(e) => setTargetFormData({ ...targetFormData, description: e.target.value })}
+                  placeholder="e.g., Main payment processing system"
+                  rows="3"
+                  className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition resize-none ${isDark ? "bg-[#0f1117] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-gray-200" : "text-gray-800"}`}>
+                  Tags (Comma Separated, Optional)
+                </label>
+                <input
+                  type="text"
+                  value={targetFormData.tags}
+                  onChange={(e) => setTargetFormData({ ...targetFormData, tags: e.target.value })}
+                  placeholder="e.g., production, critical, api"
+                  className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition ${isDark ? "bg-[#0f1117] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
+                />
+              </div>
+
+              {addTargetError && (
+                <div className={`p-3 rounded-lg flex items-start gap-3 ${isDark ? "bg-red-500/20 border border-red-500/30" : "bg-red-50 border border-red-200"}`}>
+                  <AlertCircle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isDark ? "text-red-400" : "text-red-600"}`} />
+                  <p className={isDark ? "text-red-300 text-sm" : "text-red-700 text-sm"}>{addTargetError}</p>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-6 border-t" style={{borderColor: isDark ? "#2a2e38" : "#e5e7eb"}}>
+                <button
+                  type="button"
+                  onClick={() => setShowAddTargetModal(false)}
+                  className={`flex-1 px-4 py-3 rounded-lg font-semibold transition ${isDark ? "bg-[#0f1117] text-gray-300 hover:bg-[#2a2e38]" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={addingTarget}
+                  className="flex-1 px-4 py-3 bg-[#3ecf8e] text-black rounded-lg hover:bg-[#52ffb2] font-semibold transition disabled:opacity-50"
+                >
+                  {addingTarget ? "Adding..." : "Add Target"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

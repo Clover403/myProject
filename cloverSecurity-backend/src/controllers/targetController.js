@@ -26,7 +26,9 @@ class TargetController {
         url,
         name,
         description: description || null,
-        tags: tags || []
+        tags: tags || [],
+        // userId bisa di-set dari authenticated user nanti
+        // untuk saat ini, biarkan nullable
       });
 
       return res.status(201).json({
@@ -36,11 +38,24 @@ class TargetController {
 
     } catch (error) {
       console.error('Create Target Error:', error);
+      console.error('Error Stack:', error.stack);
+      console.error('Error Details:', {
+        name: error.name,
+        message: error.message,
+        code: error.code,
+        detail: error.detail,
+        originalError: error.originalError?.message
+      });
       
       // Better error messages
       if (error.name === 'SequelizeValidationError') {
         const messages = error.errors.map(e => e.message).join(', ');
         return res.status(400).json({ error: `Validation error: ${messages}` });
+      }
+      
+      if (error.name === 'SequelizeDatabaseError') {
+        console.error('Database Error Details:', error.original);
+        return res.status(500).json({ error: `Database error: ${error.message}` });
       }
       
       return res.status(500).json({ error: error.message || 'Failed to create target' });

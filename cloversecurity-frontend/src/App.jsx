@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -32,17 +32,24 @@ function ProtectedRoute({ element }) {
 
 function App() {
   const dispatch = useDispatch();
-  const { token, isAuthenticated, user } = useSelector((state) => state.auth);
+  const { token, isAuthenticated, user, loading } = useSelector((state) => state.auth);
+  const [verificationAttempted, setVerificationAttempted] = useState(false);
 
   useEffect(() => {
-    // Verify token on app load if token exists
+    // Verify token on app load if token exists (only once!)
     const storedToken = localStorage.getItem('authToken');
     
-    if (storedToken && !user) {
+    // Only verify if:
+    // 1. We haven't attempted verification yet
+    // 2. There's a stored token
+    // 3. We don't have user data yet
+    // 4. Not currently loading
+    if (!verificationAttempted && storedToken && !user && !loading) {
       console.log('🔍 Verifying stored token...');
+      setVerificationAttempted(true);
       dispatch(verifyToken(storedToken));
     }
-  }, [dispatch, user]);
+  }, [verificationAttempted, dispatch, user, loading]);
 
   return (
     <Router>

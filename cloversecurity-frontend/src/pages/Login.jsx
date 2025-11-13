@@ -8,7 +8,7 @@ function Login() {
   const navigate = useNavigate();
   const { isDark } = useTheme();
   const [searchParams] = useSearchParams();
-  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { isAuthenticated, loading } = useSelector((state) => state.auth);
   const [error, setError] = React.useState('');
 
   useEffect(() => {
@@ -23,11 +23,11 @@ function Login() {
       setError(errorMessages[errorParam] || 'Authentication failed');
     }
 
-    // Redirect if already authenticated
-    if (isAuthenticated) {
+    // Redirect if already authenticated (but not if loading)
+    if (isAuthenticated && !loading) {
       navigate('/', { replace: true });
     }
-  }, [isAuthenticated, navigate, searchParams]);
+  }, [isAuthenticated, navigate, searchParams, loading]);
 
   const handleGoogleLogin = () => {
     // Clear any previous errors

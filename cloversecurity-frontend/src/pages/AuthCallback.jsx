@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setToken, verifyToken } from '../redux/authSlice';
@@ -7,9 +7,16 @@ function AuthCallback() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
+  const callbackProcessed = useRef(false);
 
   useEffect(() => {
     const handleCallback = async () => {
+      // Prevent multiple executions
+      if (callbackProcessed.current) {
+        return;
+      }
+      callbackProcessed.current = true;
+
       // Get token from URL
       const token = searchParams.get('token');
       const error = searchParams.get('error');

@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+/* Dark/Light Theme Variables */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --bg-tertiary: #f3f4f6;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --border-color: #e5e7eb;
+  --card-bg: #ffffff;
+}
+
+html.dark {
+  --bg-primary: #0f1117;
+  --bg-secondary: #1a1d24;
+  --bg-tertiary: #2a2e38;
+  --text-primary: #e5e7eb;
+  --text-secondary: #a1a5b1;
+  --border-color: #2a2e38;
+  --card-bg: #1a1d24;
+}

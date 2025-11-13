@@ -46,6 +46,10 @@ function Dashboard() {
       setRecentScans(scansRes.data.scans);
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error);
+      // If 401, token might be invalid - could trigger logout
+      if (error.response?.status === 401) {
+        console.warn("Authentication failed - token may be invalid");
+      }
     } finally {
       setLoading(false);
     }

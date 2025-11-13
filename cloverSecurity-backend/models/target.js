@@ -16,7 +16,13 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(500),
       allowNull: false,
       validate: {
-        isUrl: true
+        // Custom URL validation - accept http://, https://, and URLs with/without trailing slash
+        customValidator(value) {
+          const urlRegex = /^https?:\/\/.+/i;
+          if (!urlRegex.test(value)) {
+            throw new Error('URL must start with http:// or https://');
+          }
+        }
       }
     },
     name: {

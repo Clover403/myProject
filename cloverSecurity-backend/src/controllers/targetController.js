@@ -11,6 +11,11 @@ class TargetController {
         return res.status(400).json({ error: 'URL and name are required' });
       }
 
+      // Basic URL validation
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        return res.status(400).json({ error: 'URL must start with http:// or https://' });
+      }
+
       // Check if target already exists
       const existingTarget = await Target.findOne({ where: { url } });
       if (existingTarget) {
@@ -31,7 +36,14 @@ class TargetController {
 
     } catch (error) {
       console.error('Create Target Error:', error);
-      return res.status(500).json({ error: 'Failed to create target' });
+      
+      // Better error messages
+      if (error.name === 'SequelizeValidationError') {
+        const messages = error.errors.map(e => e.message).join(', ');
+        return res.status(400).json({ error: `Validation error: ${messages}` });
+      }
+      
+      return res.status(500).json({ error: error.message || 'Failed to create target' });
     }
   }
 

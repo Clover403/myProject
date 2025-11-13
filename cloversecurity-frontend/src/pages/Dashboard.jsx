@@ -76,6 +76,11 @@ function Dashboard() {
     setAddTargetError("");
 
     try {
+      // Validate URL format
+      if (!targetFormData.url.startsWith('http://') && !targetFormData.url.startsWith('https://')) {
+        throw new Error('URL must start with http:// or https://');
+      }
+
       const targetData = {
         ...targetFormData,
         tags: targetFormData.tags
@@ -90,7 +95,9 @@ function Dashboard() {
       
       // Success - could add notification here
     } catch (error) {
-      setAddTargetError(error.response?.data?.error || "Failed to add target");
+      const errorMsg = error.response?.data?.error || error.message || "Failed to add target";
+      setAddTargetError(errorMsg);
+      console.error('Add target error:', error);
     } finally {
       setAddingTarget(false);
     }

@@ -38,6 +38,12 @@ function Targets() {
     e.preventDefault();
 
     try {
+      // Validate URL format
+      if (!formData.url.startsWith('http://') && !formData.url.startsWith('https://')) {
+        alert('URL must start with http:// or https://');
+        return;
+      }
+
       const targetData = {
         ...formData,
         tags: formData.tags
@@ -56,7 +62,9 @@ function Targets() {
       setFormData({ url: "", name: "", description: "", tags: "" });
       fetchTargets();
     } catch (error) {
-      alert(error.response?.data?.error || "Failed to save target");
+      const errorMsg = error.response?.data?.error || error.message || "Failed to save target";
+      alert(errorMsg);
+      console.error('Save target error:', error);
     }
   };
 

@@ -1,20 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const targetController = require('../controllers/targetController');
+const { requireAuth } = require('../middleware/auth');
 
 // CREATE - Add new target
-router.post('/', targetController.createTarget);
+router.post('/', requireAuth, targetController.createTarget);
 
 // READ - Get all targets
-router.get('/', targetController.getAllTargets);
+router.get('/', requireAuth, targetController.getAllTargets);
 
 // READ - Get target by ID
-router.get('/:id', targetController.getTargetById);
+router.get('/:id', requireAuth, targetController.getTargetById);
 
 // UPDATE - Update target
-router.put('/:id', targetController.updateTarget);
+router.put('/:id', requireAuth, targetController.updateTarget);
 
 // DELETE - Delete target
-router.delete('/:id', targetController.deleteTarget);
+router.delete('/:id', requireAuth, targetController.deleteTarget);
 
 module.exports = router;

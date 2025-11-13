@@ -7,10 +7,15 @@ class ScanController {
   async startScan(req, res) {
     try {
       const { url, scanType, targetId } = req.body;
+      const userId = req.user?.id;
 
       // Validate input
       if (!url) {
         return res.status(400).json({ error: "URL is required" });
+      }
+
+      if (!userId) {
+        return res.status(401).json({ error: "User authentication required" });
       }
 
       // Create scan record
@@ -18,6 +23,7 @@ class ScanController {
         url,
         scanType: scanType || "quick",
         targetId: targetId || null,
+        userId,
         status: "pending",
         scannerUsed: "zap",
       });
@@ -38,6 +44,14 @@ class ScanController {
       });
     } catch (error) {
       console.error("Start Scan Error:", error);
+      console.error("Error Stack:", error.stack);
+      console.error("Error Details:", {
+        name: error.name,
+        message: error.message,
+        code: error.code,
+        detail: error.detail,
+        originalError: error.originalError?.message
+      });
       return res.status(500).json({ error: "Failed to start scan" });
     }
   }

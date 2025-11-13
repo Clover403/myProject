@@ -1,26 +1,27 @@
 const express = require('express');
 const router = express.Router();
 const scanController = require('../controllers/scanController');
+const { requireAuth } = require('../middleware/auth');
 
 // CREATE - Start new scan
-router.post('/', scanController.startScan);
+router.post('/', requireAuth, scanController.startScan);
 
 // READ - Get all scans
-router.get('/', scanController.getAllScans);
+router.get('/', requireAuth, scanController.getAllScans);
 
 // READ - Get scan by ID
-router.get('/:id', scanController.getScanById);
+router.get('/:id', requireAuth, scanController.getScanById);
 
 // READ - Get scan status (for polling)
-router.get('/:id/status', scanController.getScanStatus);
+router.get('/:id/status', requireAuth, scanController.getScanStatus);
 
 // READ - Get statistics
-router.get('/stats/summary', scanController.getStats);
+router.get('/stats/summary', requireAuth, scanController.getStats);
 
 // UPDATE - Update scan notes
-router.patch('/:id/notes', scanController.updateNotes);
+router.patch('/:id/notes', requireAuth, scanController.updateNotes);
 
 // DELETE - Delete scan
-router.delete('/:id', scanController.deleteScan);
+router.delete('/:id', requireAuth, scanController.deleteScan);
 
 module.exports = router;

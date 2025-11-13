@@ -103,7 +103,7 @@ function NewScan() {
 
             {/* Select from Targets */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-500 mb-2">
                 Select from Saved Targets (Optional)
               </label>
               <select
@@ -124,7 +124,7 @@ function NewScan() {
 
             {/* URL Input */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-500 mb-2">
                 Target URL *
               </label>
               <input

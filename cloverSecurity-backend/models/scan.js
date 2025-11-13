@@ -18,6 +18,14 @@ module.exports = (sequelize, DataTypes) => {
   
   Scan.init({
     targetId: DataTypes.INTEGER,
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'Users',
+        key: 'id'
+      }
+    },
     url: {
       type: DataTypes.STRING(500),
       allowNull: false

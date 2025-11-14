@@ -1,7 +1,7 @@
-import React,{ useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { scanAPI, aiAPI } from "../services/api";
-import { useTheme } from '../context/ThemeContext';
+import { useTheme } from "../context/ThemeContext";
 import {
   ArrowLeft,
   Shield,
@@ -77,7 +77,7 @@ function ScanDetail() {
       return null;
     }
 
-     return {
+    return {
       scanId: scan.id,
       url: scan.url,
       status: scan.status,
@@ -87,7 +87,7 @@ function ScanDetail() {
         critical: scan.criticalCount,
         high: scan.highCount,
         medium: scan.mediumCount,
-        low: scan.lowCount,
+         low: scan.lowCount,
       },
       vulnerabilities: (scan.vulnerabilities || []).slice(0, 6).map((vuln) => ({
         id: vuln.id,
@@ -99,22 +99,22 @@ function ScanDetail() {
   }, [scan]);
 
   const chatSuggestions = useMemo(() => {
-    if (!scan) { 
+    if (!scan) {
       return [
-        'Summarise the key risks from this scan.',
-        'Outline the next remediation steps I should take.',
-        'What evidence should I collect to verify fixes?'
+        "Summarise the key risks from this scan.",
+        "Outline the next remediation steps I should take.",
+        "What evidence should I collect to verify fixes?",
       ];
     }
 
     const topVuln = (scan.vulnerabilities || [])[0];
 
     return [
-      'Summarise the critical issues and prioritise remediation.',
+      "Summarise the critical issues and prioritise remediation.",
       topVuln
         ? `Explain how to resolve the ${topVuln.vulnType} finding.`
-        : 'Give me mitigation steps for the highest severity vulnerabilities.',
-      'Create a checklist to validate remediation after fixes.',
+        : "Give me mitigation steps for the highest severity vulnerabilities.",
+      "Create a checklist to validate remediation after fixes.",
     ];
   }, [scan]);
 
@@ -152,7 +152,8 @@ function ScanDetail() {
         cached: response.data.cached,
       });
     } catch (error) {
-      const message = error.response?.data?.error || "Failed to generate AI explanation";
+      const message =
+        error.response?.data?.error || "Failed to generate AI explanation";
       alert(message);
     } finally {
       setLoadingAI(false);
@@ -167,7 +168,9 @@ function ScanDetail() {
         medium: "bg-[#3a3211] text-yellow-200 border-[#6f5a1a]",
         low: "bg-[#112d3a] text-blue-200 border-[#1f4f68]",
       };
-      return darkColors[severity] || "bg-[#1e2030] text-gray-200 border-[#2f3140]";
+      return (
+        darkColors[severity] || "bg-[#1e2030] text-gray-200 border-[#2f3140]"
+      );
     }
 
     const lightColors = {
@@ -229,26 +232,44 @@ function ScanDetail() {
   }
 
   return (
-    <div className={`min-h-screen p-6 ${isDark ? "bg-[#0f1117]" : "bg-gray-50"}`}>
+    <div
+      className={`min-h-screen p-6 ${isDark ? "bg-[#0f1117]" : "bg-gray-50"}`}
+    >
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <Link
             to="/scans"
-            className={`flex items-center gap-2 mb-4 ${isDark ? "text-gray-400 hover:text-gray-200" : "text-gray-600 hover:text-gray-900"}`}
+            className={`flex items-center gap-2 mb-4 ${
+              isDark
+                ? "text-gray-400 hover:text-gray-200"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Scans
           </Link>
 
-            <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between">
             <div>
-              <h1 className={`text-3xl font-bold flex items-center gap-2 ${isDark ? "text-white" : "text-gray-900"}`}>
+              <h1
+                className={`text-3xl font-bold flex items-center gap-2 ${
+                  isDark ? "text-white" : "text-gray-900"
+                }`}
+              >
                 <Shield className="w-8 h-8 text-[#3ecf8e]" />
                 Scan Results
               </h1>
-              <p className={`mt-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>{scan.url}</p>
-              <p className={`text-sm mt-1 ${isDark ? "text-gray-500" : "text-gray-500"}`}>
+              <p
+                className={`mt-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}
+              >
+                {scan.url}
+              </p>
+              <p
+                className={`text-sm mt-1 ${
+                  isDark ? "text-gray-500" : "text-gray-500"
+                }`}
+              >
                 Scanned on {new Date(scan.createdAt).toLocaleString()}
               </p>
             </div>
@@ -287,10 +308,18 @@ function ScanDetail() {
           >
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
             <div>
-              <div className={`font-semibold ${isDark ? "text-blue-200" : "text-blue-900"}`}>
+              <div
+                className={`font-semibold ${
+                  isDark ? "text-blue-200" : "text-blue-900"
+                }`}
+              >
                 Scan in Progress
               </div>
-              <div className={`text-sm ${isDark ? "text-blue-300" : "text-blue-700"}`}>
+              <div
+                className={`text-sm ${
+                  isDark ? "text-blue-300" : "text-blue-700"
+                }`}
+              >
                 This page will update automatically when scan completes...
               </div>
             </div>
@@ -305,8 +334,18 @@ function ScanDetail() {
                 : "bg-red-50 border border-red-200"
             }`}
           >
-            <div className={`font-semibold ${isDark ? "text-red-200" : "text-red-900"}`}>Scan Failed</div>
-            <div className={`text-sm mt-1 ${isDark ? "text-red-300" : "text-red-700"}`}>
+            <div
+              className={`font-semibold ${
+                isDark ? "text-red-200" : "text-red-900"
+              }`}
+            >
+              Scan Failed
+            </div>
+            <div
+              className={`text-sm mt-1 ${
+                isDark ? "text-red-300" : "text-red-700"
+              }`}
+            >
               {scan.errorMessage || "Unknown error occurred"}
             </div>
           </div>
@@ -318,31 +357,51 @@ function ScanDetail() {
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
               <div className={`${surfaceClass} p-4 rounded-lg`}>
                 <div className={`text-sm ${mutedTextClass}`}>Total</div>
-                <div className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                <div
+                  className={`text-2xl font-bold ${
+                    isDark ? "text-white" : "text-gray-900"
+                  }`}
+                >
                   {scan.totalVulnerabilities}
                 </div>
               </div>
               <div className={`${surfaceClass} p-4 rounded-lg`}>
                 <div className={`text-sm ${mutedTextClass}`}>Critical</div>
-                <div className={`text-2xl font-bold ${isDark ? "text-white" : "text-red-600"}`}>
+                <div
+                  className={`text-2xl font-bold ${
+                    isDark ? "text-white" : "text-red-600"
+                  }`}
+                >
                   {scan.criticalCount}
                 </div>
               </div>
               <div className={`${surfaceClass} p-4 rounded-lg`}>
                 <div className={`text-sm ${mutedTextClass}`}>High</div>
-                <div className={`text-2xl font-bold ${isDark ? "text-white" : "text-orange-600"}`}>
+                <div
+                  className={`text-2xl font-bold ${
+                    isDark ? "text-white" : "text-orange-600"
+                  }`}
+                >
                   {scan.highCount}
                 </div>
               </div>
               <div className={`${surfaceClass} p-4 rounded-lg`}>
                 <div className={`text-sm ${mutedTextClass}`}>Medium</div>
-                <div className={`text-2xl font-bold ${isDark ? "text-white" : "text-yellow-600"}`}>
+                <div
+                  className={`text-2xl font-bold ${
+                    isDark ? "text-white" : "text-yellow-600"
+                  }`}
+                >
                   {scan.mediumCount}
                 </div>
               </div>
               <div className={`${surfaceClass} p-4 rounded-lg`}>
                 <div className={`text-sm ${mutedTextClass}`}>Low</div>
-                <div className={`text-2xl font-bold ${isDark ? "text-white" : "text-blue-600"}`}>
+                <div
+                  className={`text-2xl font-bold ${
+                    isDark ? "text-white" : "text-blue-600"
+                  }`}
+                >
                   {scan.lowCount}
                 </div>
               </div>
@@ -350,15 +409,22 @@ function ScanDetail() {
 
             {(scan.virustotalVerdict || scan.virustotalStats) && (
               <div className={`${surfaceClass} rounded-lg mb-8`}>
-                <div className={`p-6 border-b ${dividerClass} flex items-center justify-between gap-4 flex-wrap`}>
+                <div
+                  className={`p-6 border-b ${dividerClass} flex items-center justify-between gap-4 flex-wrap`}
+                >
                   <div className="flex items-center gap-3">
                     <Shield className="w-6 h-6 text-[#3ecf8e]" />
                     <div>
-                      <h2 className={`text-xl font-semibold ${isDark ? "text-gray-100" : "text-gray-900"}`}>
+                      <h2
+                        className={`text-xl font-semibold ${
+                          isDark ? "text-gray-100" : "text-gray-900"
+                        }`}
+                      >
                         VirusTotal Intelligence
                       </h2>
                       <p className={`text-sm ${subtleTextClass}`}>
-                        Aggregated reputation across VirusTotal partners and engines.
+                        Aggregated reputation across VirusTotal partners and
+                        engines.
                       </p>
                     </div>
                   </div>
@@ -367,10 +433,14 @@ function ScanDetail() {
                     {scan.virustotalVerdict && (
                       <span
                         className={`px-3 py-1 text-xs font-semibold rounded-full border ${
-                          getVirusTotalVerdictStyles(scan.virustotalVerdict).badge
+                          getVirusTotalVerdictStyles(scan.virustotalVerdict)
+                            .badge
                         }`}
                       >
-                        {getVirusTotalVerdictStyles(scan.virustotalVerdict).label}
+                        {
+                          getVirusTotalVerdictStyles(scan.virustotalVerdict)
+                            .label
+                        }
                       </span>
                     )}
                     {scan.virustotalPermalink && (
@@ -389,19 +459,31 @@ function ScanDetail() {
                   </div>
                 </div>
 
-                {scan.virustotalVerdict === 'error' ? (
+                {scan.virustotalVerdict === "error" ? (
                   <div className="p-6 flex items-start gap-3">
-                    <div className={`p-2 rounded-full ${
-                      isDark ? "bg-[#341114] border border-[#641e24]" : "bg-red-100 border border-red-300"
-                    }`}>
-                      <AlertTriangle className={isDark ? "text-red-200" : "text-red-600"} size={16} />
+                    <div
+                      className={`p-2 rounded-full ${
+                        isDark
+                          ? "bg-[#341114] border border-[#641e24]"
+                          : "bg-red-100 border border-red-300"
+                      }`}
+                    >
+                      <AlertTriangle
+                        className={isDark ? "text-red-200" : "text-red-600"}
+                        size={16}
+                      />
                     </div>
                     <div>
-                      <div className={`text-sm font-medium ${isDark ? "text-red-200" : "text-red-700"}`}>
+                      <div
+                        className={`text-sm font-medium ${
+                          isDark ? "text-red-200" : "text-red-700"
+                        }`}
+                      >
                         VirusTotal data unavailable
                       </div>
                       <div className={`text-sm mt-1 ${subtleTextClass}`}>
-                        {scan.virustotalStats?.error || 'The VirusTotal API returned an error while analysing this URL.'}
+                        {scan.virustotalStats?.error ||
+                          "The VirusTotal API returned an error while analysing this URL."}
                       </div>
                     </div>
                   </div>
@@ -409,21 +491,42 @@ function ScanDetail() {
                   <div className="p-6">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {[
-                        { label: 'Malicious', value: scan.virustotalStats?.malicious ?? scan.virustotalMaliciousCount ?? 0 },
-                        { label: 'Suspicious', value: scan.virustotalStats?.suspicious ?? 0 },
-                        { label: 'Harmless', value: scan.virustotalStats?.harmless ?? 0 },
-                        { label: 'Undetected', value: scan.virustotalStats?.undetected ?? 0 },
+                        {
+                          label: "Malicious",
+                          value:
+                            scan.virustotalStats?.malicious ??
+                            scan.virustotalMaliciousCount ??
+                            0,
+                        },
+                        {
+                          label: "Suspicious",
+                          value: scan.virustotalStats?.suspicious ?? 0,
+                        },
+                        {
+                          label: "Harmless",
+                          value: scan.virustotalStats?.harmless ?? 0,
+                        },
+                        {
+                          label: "Undetected",
+                          value: scan.virustotalStats?.undetected ?? 0,
+                        },
                       ].map((item) => (
                         <div
                           key={item.label}
                           className={`p-4 rounded-lg border border-dashed ${
                             isDark
-                              ? 'bg-[#151822] border-[#1f2330]'
-                              : 'bg-white border-gray-200'
+                              ? "bg-[#151822] border-[#1f2330]"
+                              : "bg-white border-gray-200"
                           }`}
                         >
-                          <div className={`text-sm ${mutedTextClass}`}>{item.label}</div>
-                          <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                          <div className={`text-sm ${mutedTextClass}`}>
+                            {item.label}
+                          </div>
+                          <div
+                            className={`text-2xl font-bold ${
+                              isDark ? "text-white" : "text-gray-900"
+                            }`}
+                          >
                             {item.value}
                           </div>
                         </div>
@@ -432,7 +535,10 @@ function ScanDetail() {
 
                     {scan.virustotalLastAnalysisDate && (
                       <div className={`mt-4 text-sm ${subtleTextClass}`}>
-                        Last analysed on {new Date(scan.virustotalLastAnalysisDate).toLocaleString()}
+                        Last analysed on{" "}
+                        {new Date(
+                          scan.virustotalLastAnalysisDate
+                        ).toLocaleString()}
                       </div>
                     )}
                   </div>
@@ -443,14 +549,26 @@ function ScanDetail() {
             {/* Vulnerabilities List */}
             <div className={`${surfaceClass} rounded-lg mb-8`}>
               <div className={`p-6 border-b ${dividerClass}`}>
-                <h2 className={`text-xl font-semibold ${isDark ? "text-gray-100" : "text-gray-900"}`}>
+                <h2
+                  className={`text-xl font-semibold ${
+                    isDark ? "text-gray-100" : "text-gray-900"
+                  }`}
+                >
                   Vulnerabilities Found ({scan.vulnerabilities?.length || 0})
                 </h2>
               </div>
 
-              <div className={`divide-y ${isDark ? "divide-[#1f2330]" : "divide-gray-200"}`}>
+              <div
+                className={`divide-y ${
+                  isDark ? "divide-[#1f2330]" : "divide-gray-200"
+                }`}
+              >
                 {scan.vulnerabilities?.length === 0 ? (
-                  <div className={`p-6 text-center ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                  <div
+                    className={`p-6 text-center ${
+                      isDark ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
                     <div className="text-4xl mb-2">🎉</div>
                     <div className="font-semibold">
                       No vulnerabilities found!
@@ -465,7 +583,11 @@ function ScanDetail() {
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <h3 className={`text-lg font-semibold ${isDark ? "text-gray-100" : "text-gray-900"}`}>
+                            <h3
+                              className={`text-lg font-semibold ${
+                                isDark ? "text-gray-100" : "text-gray-900"
+                              }`}
+                            >
                               {vuln.vulnType}
                             </h3>
                             <span
@@ -531,12 +653,20 @@ function ScanDetail() {
                   : "bg-white border-gray-200"
               }`}
             >
-              <h2 className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+              <h2
+                className={`text-2xl font-bold ${
+                  isDark ? "text-white" : "text-gray-900"
+                }`}
+              >
                 🤖 AI Security Assistant
               </h2>
               <button
                 onClick={() => setSelectedVuln(null)}
-                className={`${isDark ? "text-gray-400 hover:text-gray-200" : "text-gray-500 hover:text-gray-700"}`}
+                className={`${
+                  isDark
+                    ? "text-gray-400 hover:text-gray-200"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
               >
                 ✕
               </button>
@@ -546,7 +676,11 @@ function ScanDetail() {
               {/* Vulnerability Info */}
               <div className="mb-6">
                 <div className="flex items-center gap-3 mb-3">
-                  <h3 className={`text-xl font-semibold ${isDark ? "text-gray-100" : "text-gray-900"}`}>
+                  <h3
+                    className={`text-xl font-semibold ${
+                      isDark ? "text-gray-100" : "text-gray-900"
+                    }`}
+                  >
                     {selectedVuln.vulnType}
                   </h3>
                   <span
@@ -574,7 +708,11 @@ function ScanDetail() {
                 <div className="space-y-6">
                   {/* Explanation */}
                   <div>
-                    <h4 className={`font-semibold mb-2 ${isDark ? "text-gray-100" : "text-gray-900"}`}>
+                    <h4
+                      className={`font-semibold mb-2 ${
+                        isDark ? "text-gray-100" : "text-gray-900"
+                      }`}
+                    >
                       💬 Explanation
                     </h4>
                     <div
@@ -591,7 +729,11 @@ function ScanDetail() {
                   {/* Fix Recommendation */}
                   {aiExplanation.fixRecommendation && (
                     <div>
-                      <h4 className={`font-semibold mb-2 ${isDark ? "text-gray-100" : "text-gray-900"}`}>
+                      <h4
+                        className={`font-semibold mb-2 ${
+                          isDark ? "text-gray-100" : "text-gray-900"
+                        }`}
+                      >
                         🔧 How to Fix
                       </h4>
                       <div
@@ -610,21 +752,25 @@ function ScanDetail() {
                   {aiExplanation.additionalResources &&
                     aiExplanation.additionalResources.length > 0 && (
                       <div>
-                        <h4 className={`font-semibold mb-2 ${isDark ? "text-gray-100" : "text-gray-900"}`}>
+                        <h4
+                          className={`font-semibold mb-2 ${
+                            isDark ? "text-gray-100" : "text-gray-900"
+                          }`}
+                        >
                           📚 Learn More
                         </h4>
                         <ul
                           className={`rounded-lg p-4 space-y-2 ${
-                            isDark
-                              ? "bg-[#152c3b] text-blue-200"
-                              : "bg-blue-50"
+                            isDark ? "bg-[#152c3b] text-blue-200" : "bg-blue-50"
                           }`}
                         >
                           {aiExplanation.additionalResources.map(
                             (resource, index) => (
                               <li
                                 key={index}
-                                className={isDark ? "text-blue-200" : "text-blue-700"}
+                                className={
+                                  isDark ? "text-blue-200" : "text-blue-700"
+                                }
                               >
                                 • {resource}
                               </li>
@@ -636,11 +782,10 @@ function ScanDetail() {
 
                   {/* AI Model Info */}
                   <div className={`text-xs text-right ${subtleTextClass}`}>
-                    Generated by {(
-                      aiExplanation.usage?.provider?.toUpperCase() ||
+                    Generated by{" "}
+                    {aiExplanation.usage?.provider?.toUpperCase() ||
                       aiExplanation.aiModel ||
-                      "AI"
-                    )}
+                      "AI"}
                     {aiExplanation.usage?.tokens?.total
                       ? ` • ${aiExplanation.usage.tokens.total} tokens`
                       : aiExplanation.tokensUsed

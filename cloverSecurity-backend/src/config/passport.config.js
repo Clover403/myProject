@@ -26,21 +26,29 @@ passport.use(new GoogleStrategy({
         where: { googleId: profile.id }
       });
 
+      const profilePhoto = profile.photos?.[0]?.value || null;
+      const profileLocale = profile._json?.locale || null;
+
       if (user) {
         console.log('✅ Existing user found:', user.email);
-        // Update last login
-        await user.update({ lastLogin: new Date() });
+        // Refresh user profile fields on each login so picture/name stay current
+        await user.update({
+          name: profile.displayName || user.name,
+          picture: profilePhoto || user.picture,
+          locale: profileLocale || user.locale,
+          lastLogin: new Date()
+        });
         return done(null, user);
       }
 
-      // Create new user
+      // Create new user with Google profile data
       console.log('➕ Creating new user...');
       user = await User.create({
         googleId: profile.id,
         email: profile.emails[0].value,
         name: profile.displayName,
-        picture: profile.photos[0]?.value,
-        locale: profile._json.locale,
+        picture: profilePhoto,
+        locale: profileLocale,
         lastLogin: new Date()
       });
 

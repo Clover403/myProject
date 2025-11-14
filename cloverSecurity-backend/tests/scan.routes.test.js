@@ -2,13 +2,30 @@ jest.mock('../src/services/zapService', () => ({
   performFullScan: jest.fn(),
 }));
 
+jest.mock('../src/services/virusTotalService', () => ({
+  scanUrl: jest.fn(),
+}));
+
 const request = require('supertest');
 const app = require('../src/app');
 const db = require('../models');
 const { createTestUser, authHeader, createTarget } = require('./utils/testUtils');
 const zapService = require('../src/services/zapService');
+const virusTotalService = require('../src/services/virusTotalService');
 
 const waitForAsyncJobs = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+const waitForScanToFinish = async (scanId, attempts = 15) => {
+  for (let i = 0; i < attempts; i += 1) {
+    await waitForAsyncJobs();
+    const scan = await db.Scan.findByPk(scanId);
+    if (scan && scan.status !== 'pending' && scan.status !== 'scanning') {
+      return scan;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+  return db.Scan.findByPk(scanId);
+};
 
 describe('Scan Routes', () => {
   let user;
@@ -20,6 +37,7 @@ describe('Scan Routes', () => {
     token = authHeader(user);
     target = await createTarget(user, { url: 'https://scan.me', name: 'Scan Target' });
     zapService.performFullScan.mockReset();
+    virusTotalService.scanUrl.mockReset();
     zapService.performFullScan.mockResolvedValue({
       success: true,
       vulnerabilities: [
@@ -35,6 +53,21 @@ describe('Scan Routes', () => {
       highCount: 1,
       mediumCount: 0,
       lowCount: 0,
+    });
+    virusTotalService.scanUrl.mockResolvedValue({
+      verdict: 'harmless',
+      maliciousCount: 0,
+      suspiciousCount: 0,
+      harmlessCount: 68,
+      undetectedCount: 4,
+      stats: {
+        harmless: 68,
+        malicious: 0,
+        suspicious: 0,
+        undetected: 4,
+      },
+      lastAnalysisDate: new Date().toISOString(),
+      permalink: 'https://www.virustotal.com/gui/url/sample',
     });
   });
 
@@ -56,8 +89,7 @@ describe('Scan Routes', () => {
     });
 
     // Allow async worker to complete
-    await waitForAsyncJobs();
-    await waitForAsyncJobs();
+    await waitForScanToFinish(response.body.scan.id);
 
     const updatedScan = await db.Scan.findByPk(response.body.scan.id, {
       include: ['vulnerabilities'],
@@ -66,6 +98,11 @@ describe('Scan Routes', () => {
     expect(updatedScan.status).toBe('completed');
     expect(updatedScan.totalVulnerabilities).toBe(1);
     expect(updatedScan.vulnerabilities.length).toBe(1);
+    expect(updatedScan.progress).toBe(100);
+    expect(updatedScan.virustotalVerdict).toBe('harmless');
+    expect(updatedScan.virustotalStats).toEqual(
+      expect.objectContaining({ malicious: 0, suspicious: 0 })
+    );
   });
 
   test('GET /api/scans returns scans with target data', async () => {
@@ -74,8 +111,7 @@ describe('Scan Routes', () => {
       .set('Authorization', token)
       .send({ url: target.url, scanType: 'quick', targetId: target.id });
 
-    await waitForAsyncJobs();
-    await waitForAsyncJobs();
+    await waitForScanToFinish(res.body.scan.id);
 
     const response = await request(app)
       .get('/api/scans')
@@ -88,6 +124,7 @@ describe('Scan Routes', () => {
       targetName: target.name,
       totalVulnerabilities: 1,
       severityLevel: 'high',
+      progress: 100,
     });
   });
 
@@ -97,8 +134,7 @@ describe('Scan Routes', () => {
       .set('Authorization', token)
       .send({ url: target.url, scanType: 'quick', targetId: target.id });
 
-    await waitForAsyncJobs();
-    await waitForAsyncJobs();
+    await waitForScanToFinish(res.body.scan.id);
 
     const response = await request(app)
       .get(`/api/scans/${res.body.scan.id}`)
@@ -108,6 +144,7 @@ describe('Scan Routes', () => {
     expect(response.body.scan).toHaveProperty('vulnerabilities');
     expect(response.body.scan.vulnerabilities.length).toBe(1);
     expect(response.body.scan.vulnerabilities[0]).toHaveProperty('aiExplanation');
+    expect(response.body.scan.progress).toBe(100);
   });
 
   test('GET /api/scans/:id/status returns scan status', async () => {
@@ -116,8 +153,7 @@ describe('Scan Routes', () => {
       .set('Authorization', token)
       .send({ url: target.url, scanType: 'quick', targetId: target.id });
 
-    await waitForAsyncJobs();
-    await waitForAsyncJobs();
+    await waitForScanToFinish(res.body.scan.id);
 
     const response = await request(app)
       .get(`/api/scans/${res.body.scan.id}/status`)
@@ -128,6 +164,7 @@ describe('Scan Routes', () => {
       scan: {
         id: res.body.scan.id,
         status: 'completed',
+        progress: 100,
       },
     });
   });
@@ -138,8 +175,7 @@ describe('Scan Routes', () => {
       .set('Authorization', token)
       .send({ url: target.url, scanType: 'quick', targetId: target.id });
 
-    await waitForAsyncJobs();
-    await waitForAsyncJobs();
+    await waitForScanToFinish(res.body.scan.id);
 
     const response = await request(app)
       .get('/api/scans/stats/summary')
@@ -161,8 +197,7 @@ describe('Scan Routes', () => {
       .set('Authorization', token)
       .send({ url: target.url, scanType: 'quick', targetId: target.id });
 
-    await waitForAsyncJobs();
-    await waitForAsyncJobs();
+    await waitForScanToFinish(res.body.scan.id);
 
     const response = await request(app)
       .patch(`/api/scans/${res.body.scan.id}/notes`)
@@ -179,8 +214,7 @@ describe('Scan Routes', () => {
       .set('Authorization', token)
       .send({ url: target.url, scanType: 'quick', targetId: target.id });
 
-    await waitForAsyncJobs();
-    await waitForAsyncJobs();
+    await waitForScanToFinish(res.body.scan.id);
 
     await request(app)
       .delete(`/api/scans/${res.body.scan.id}`)

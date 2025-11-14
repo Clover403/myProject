@@ -1,5 +1,6 @@
 const { Scan, Vulnerability, Target, AIExplanation } = require("../../models");
 const zapService = require("../services/zapService");
+const virusTotalService = require("../services/virusTotalService");
 const { Op } = require("sequelize");
 
 class ScanController {
@@ -33,6 +34,7 @@ class ScanController {
         targetId: targetId ? parseInt(targetId) : null,
         userId: parseInt(userId),
         status: "pending",
+        progress: 0,
         scannerUsed: "zap",
         totalVulnerabilities: 0,
         criticalCount: 0,
@@ -59,11 +61,26 @@ class ScanController {
 
           // Update status to scanning
           console.log(`🔄 Updating scan ${scan.id} status to scanning...`);
-          await Scan.update({ status: "scanning" }, { where: { id: scan.id } });
+          const updateScanFields = (fields) =>
+            Scan.update(fields, { where: { id: scan.id } });
+          await updateScanFields({ status: "scanning", progress: 10 });
 
           // Perform ZAP scan
           console.log(`🔍 Starting ZAP scan for URL: ${url}`);
           const scanResults = await zapService.performFullScan(url);
+          await updateScanFields({ progress: 55 });
+
+          // Run VirusTotal analysis (best effort)
+          console.log(`🧪 Checking VirusTotal reputation for: ${url}`);
+          const vtSummary = await virusTotalService.scanUrl(url);
+          if (vtSummary?.error) {
+            console.warn(`⚠️ VirusTotal returned an error: ${vtSummary.error}`);
+          } else if (vtSummary) {
+            console.log('✅ VirusTotal summary received:', vtSummary);
+          } else {
+            console.log('ℹ️ No VirusTotal summary available for this URL.');
+          }
+          await updateScanFields({ progress: 75 });
 
           // Calculate duration
           const duration = Math.floor((Date.now() - startTime) / 1000);
@@ -77,19 +94,43 @@ class ScanController {
             duration
           });
 
+          await updateScanFields({ progress: 90 });
+
+          const updatePayload = {
+            status: "completed",
+            totalVulnerabilities: scanResults.totalVulnerabilities,
+            criticalCount: scanResults.criticalCount,
+            highCount: scanResults.highCount,
+            mediumCount: scanResults.mediumCount,
+            lowCount: scanResults.lowCount,
+            scanDuration: duration,
+            completedAt: new Date(),
+            progress: 100,
+          };
+
+          if (vtSummary && !vtSummary.error) {
+            updatePayload.virustotalVerdict = vtSummary.verdict || null;
+            updatePayload.virustotalStats = vtSummary.stats || null;
+            updatePayload.virustotalMaliciousCount =
+              typeof vtSummary.maliciousCount === "number"
+                ? vtSummary.maliciousCount
+                : 0;
+            updatePayload.virustotalLastAnalysisDate = vtSummary.lastAnalysisDate
+              ? new Date(vtSummary.lastAnalysisDate)
+              : null;
+            updatePayload.virustotalPermalink = vtSummary.permalink || null;
+          } else if (vtSummary?.error) {
+            updatePayload.virustotalVerdict = "error";
+            updatePayload.virustotalStats = { error: vtSummary.error };
+            updatePayload.virustotalMaliciousCount = null;
+            updatePayload.virustotalLastAnalysisDate = null;
+            updatePayload.virustotalPermalink = null;
+          }
+
           // Update scan with results
           console.log(`💾 Updating scan ${scan.id} with results...`);
           const updateResult = await Scan.update(
-            {
-              status: "completed",
-              totalVulnerabilities: scanResults.totalVulnerabilities,
-              criticalCount: scanResults.criticalCount,
-              highCount: scanResults.highCount,
-              mediumCount: scanResults.mediumCount,
-              lowCount: scanResults.lowCount,
-              scanDuration: duration,
-              completedAt: new Date(),
-            },
+            updatePayload,
             {
               where: { id: scan.id },
               returning: true
@@ -120,6 +161,7 @@ class ScanController {
               {
                 status: "failed",
                 errorMessage: error.message,
+                progress: 100,
               },
               {
                 where: { id: scan.id },
@@ -139,6 +181,7 @@ class ScanController {
           url: scan.url,
           status: scan.status,
           scanType: scan.scanType,
+          progress: scan.progress,
         },
       });
     } catch (error) {
@@ -433,6 +476,7 @@ class ScanController {
           "id",
           "userId",
           "status",
+          "progress",
           "totalVulnerabilities",
           "completedAt",
           "errorMessage",

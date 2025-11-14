@@ -7,6 +7,8 @@ import {
   Shield,
   Trash2,
   RefreshCw,
+  ExternalLink,
+  AlertTriangle,
 } from "lucide-react";
 import AIChatPanel from "../components/AIChatPanel";
 
@@ -177,6 +179,43 @@ function ScanDetail() {
     return lightColors[severity] || "bg-gray-100 text-gray-800 border-gray-300";
   };
 
+  const getVirusTotalVerdictStyles = (verdict) => {
+    const mapping = {
+      malicious: {
+        badge: isDark
+          ? "bg-[#341114] text-red-200 border-[#641e24]"
+          : "bg-red-100 text-red-700 border-red-300",
+        label: "Malicious",
+      },
+      suspicious: {
+        badge: isDark
+          ? "bg-[#392212] text-orange-200 border-[#6e3a19]"
+          : "bg-orange-100 text-orange-700 border-orange-300",
+        label: "Suspicious",
+      },
+      harmless: {
+        badge: isDark
+          ? "bg-[#11341e] text-green-200 border-[#1f5b34]"
+          : "bg-green-100 text-green-700 border-green-300",
+        label: "Harmless",
+      },
+      unknown: {
+        badge: isDark
+          ? "bg-[#1f2330] text-gray-300 border-[#2a2f3d]"
+          : "bg-gray-100 text-gray-700 border-gray-300",
+        label: "Unknown",
+      },
+      error: {
+        badge: isDark
+          ? "bg-[#341114] text-red-200 border-[#641e24]"
+          : "bg-red-100 text-red-700 border-red-300",
+        label: "Error",
+      },
+    };
+
+    return mapping[verdict] || mapping.unknown;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -308,6 +347,98 @@ function ScanDetail() {
                 </div>
               </div>
             </div>
+
+            {(scan.virustotalVerdict || scan.virustotalStats) && (
+              <div className={`${surfaceClass} rounded-lg mb-8`}>
+                <div className={`p-6 border-b ${dividerClass} flex items-center justify-between gap-4 flex-wrap`}>
+                  <div className="flex items-center gap-3">
+                    <Shield className="w-6 h-6 text-[#3ecf8e]" />
+                    <div>
+                      <h2 className={`text-xl font-semibold ${isDark ? "text-gray-100" : "text-gray-900"}`}>
+                        VirusTotal Intelligence
+                      </h2>
+                      <p className={`text-sm ${subtleTextClass}`}>
+                        Aggregated reputation across VirusTotal partners and engines.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    {scan.virustotalVerdict && (
+                      <span
+                        className={`px-3 py-1 text-xs font-semibold rounded-full border ${
+                          getVirusTotalVerdictStyles(scan.virustotalVerdict).badge
+                        }`}
+                      >
+                        {getVirusTotalVerdictStyles(scan.virustotalVerdict).label}
+                      </span>
+                    )}
+                    {scan.virustotalPermalink && (
+                      <a
+                        href={scan.virustotalPermalink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`inline-flex items-center gap-1 text-sm ${
+                          isDark ? "text-[#3ecf8e]" : "text-green-600"
+                        } hover:underline`}
+                      >
+                        View on VirusTotal
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                {scan.virustotalVerdict === 'error' ? (
+                  <div className="p-6 flex items-start gap-3">
+                    <div className={`p-2 rounded-full ${
+                      isDark ? "bg-[#341114] border border-[#641e24]" : "bg-red-100 border border-red-300"
+                    }`}>
+                      <AlertTriangle className={isDark ? "text-red-200" : "text-red-600"} size={16} />
+                    </div>
+                    <div>
+                      <div className={`text-sm font-medium ${isDark ? "text-red-200" : "text-red-700"}`}>
+                        VirusTotal data unavailable
+                      </div>
+                      <div className={`text-sm mt-1 ${subtleTextClass}`}>
+                        {scan.virustotalStats?.error || 'The VirusTotal API returned an error while analysing this URL.'}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {[
+                        { label: 'Malicious', value: scan.virustotalStats?.malicious ?? scan.virustotalMaliciousCount ?? 0 },
+                        { label: 'Suspicious', value: scan.virustotalStats?.suspicious ?? 0 },
+                        { label: 'Harmless', value: scan.virustotalStats?.harmless ?? 0 },
+                        { label: 'Undetected', value: scan.virustotalStats?.undetected ?? 0 },
+                      ].map((item) => (
+                        <div
+                          key={item.label}
+                          className={`p-4 rounded-lg border border-dashed ${
+                            isDark
+                              ? 'bg-[#151822] border-[#1f2330]'
+                              : 'bg-white border-gray-200'
+                          }`}
+                        >
+                          <div className={`text-sm ${mutedTextClass}`}>{item.label}</div>
+                          <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                            {item.value}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {scan.virustotalLastAnalysisDate && (
+                      <div className={`mt-4 text-sm ${subtleTextClass}`}>
+                        Last analysed on {new Date(scan.virustotalLastAnalysisDate).toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Vulnerabilities List */}
             <div className={`${surfaceClass} rounded-lg mb-8`}>

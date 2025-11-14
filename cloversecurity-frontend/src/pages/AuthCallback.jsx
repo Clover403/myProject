@@ -7,54 +7,66 @@ function AuthCallback() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
-  const callbackProcessed = useRef(false);
+  const processing = useRef(false);
 
   useEffect(() => {
     const handleCallback = async () => {
       // Prevent multiple executions
-      if (callbackProcessed.current) {
+      if (processing.current) {
+        console.log('⏭️ Already processing callback, skipping...');
         return;
       }
-      callbackProcessed.current = true;
+      processing.current = true;
 
       // Get token from URL
       const token = searchParams.get('token');
       const error = searchParams.get('error');
 
+      console.log('📥 OAuth callback received:', { hasToken: !!token, error });
+
       if (error) {
-        console.error('OAuth error:', error);
+        console.error('❌ OAuth error:', error);
         alert('Authentication failed. Please try again.');
-        navigate('/login');
+        navigate('/login', { replace: true });
         return;
       }
 
       if (!token) {
-        console.error('No token received');
+        console.error('❌ No token received');
         alert('Authentication failed. No token received.');
-        navigate('/login');
+        navigate('/login', { replace: true });
         return;
       }
 
       try {
-        // Save token to localStorage and Redux
+        console.log('💾 Saving token...');
+        
+        // 1. Save token to localStorage FIRST
         localStorage.setItem('authToken', token);
+        
+        // 2. Update Redux state
         dispatch(setToken(token));
 
-        // Verify token and get user data
+        // 3. Verify token and get user data
+        console.log('🔍 Verifying token...');
         const resultAction = await dispatch(verifyToken(token));
         
         if (verifyToken.fulfilled.match(resultAction)) {
           console.log('✅ Authentication successful!');
-          // Redirect to dashboard
-          navigate('/', { replace: true });
+          console.log('👤 User data:', resultAction.payload);
+          
+          // Give a small delay to ensure state is updated
+          setTimeout(() => {
+            navigate('/', { replace: true });
+          }, 100);
         } else {
           throw new Error('Token verification failed');
         }
       } catch (error) {
-        console.error('Error processing authentication:', error);
+        console.error('❌ Error processing authentication:', error);
         localStorage.removeItem('authToken');
         alert('Authentication failed. Please try again.');
-        navigate('/login');
+        navigate('/login', { replace: true });
       }
     };
 

@@ -9,14 +9,14 @@ router.post('/', requireAuth, scanController.startScan);
 // READ - Get all scans
 router.get('/', requireAuth, scanController.getAllScans);
 
-// READ - Get scan by ID
-router.get('/:id', requireAuth, scanController.getScanById);
+// READ - Get statistics (place before param routes to avoid conflicts)
+router.get('/stats/summary', requireAuth, scanController.getStats);
 
 // READ - Get scan status (for polling)
 router.get('/:id/status', requireAuth, scanController.getScanStatus);
 
-// READ - Get statistics
-router.get('/stats/summary', requireAuth, scanController.getStats);
+// READ - Get scan by ID
+router.get('/:id', requireAuth, scanController.getScanById);
 
 // UPDATE - Update scan notes
 router.patch('/:id/notes', requireAuth, scanController.updateNotes);

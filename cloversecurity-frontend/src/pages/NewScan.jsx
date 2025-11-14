@@ -1,31 +1,28 @@
-import React,{ useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { scanAPI, targetAPI } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { scanAPI } from '../services/api';
 import { useTheme } from '../context/ThemeContext';
 import { Shield, ArrowLeft } from 'lucide-react';
 
 function NewScan() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isDark } = useTheme();
   const [url, setUrl] = useState('');
   const [scanType, setScanType] = useState('quick');
-  const [targetId, setTargetId] = useState('');
-  const [targets, setTargets] = useState([]);
+  const [targetId, setTargetId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchTargets();
-  }, []);
-
-  const fetchTargets = async () => {
-    try {
-      const response = await targetAPI.getAllTargets();
-      setTargets(response.data.targets);
-    } catch (err) {
-      console.error('Failed to fetch targets:', err);
+    const initialState = location.state || {};
+    if (initialState.url) {
+      setUrl(initialState.url);
     }
-  };
+    if (initialState.targetId) {
+      setTargetId(Number(initialState.targetId));
+    }
+  }, [location.state]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -42,30 +39,23 @@ function NewScan() {
       const scanData = {
         url,
         scanType,
-        targetId: targetId || null
+  targetId: targetId != null ? targetId : null
       };
 
       const response = await scanAPI.startScan(scanData);
       
+      console.log('✅ Scan created:', response.data);
+      
       // Navigate to scan detail page
-      navigate(`/scans/${response.scan.id}`);
+      navigate(`/scans/${response.data.scan.id}`);
       
     } catch (err) {
-      setError(err.message || 'Failed to start scan');
+      console.error('❌ Scan error:', err);
+      console.error('Error response:', err.response?.data);
+      const errorMessage = err.response?.data?.details || err.response?.data?.error || err.message || 'Failed to start scan';
+      setError(errorMessage);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleTargetSelect = (e) => {
-    const selectedTargetId = e.target.value;
-    setTargetId(selectedTargetId);
-    
-    if (selectedTargetId) {
-      const selectedTarget = targets.find(t => t.id === parseInt(selectedTargetId));
-      if (selectedTarget) {
-        setUrl(selectedTarget.url);
-      }
     }
   };
 
@@ -74,13 +64,13 @@ function NewScan() {
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <button
-            onClick={() => navigate('/')}
+          <Link
+            to="/"
             className={`flex items-center gap-2 mb-4 ${isDark ? "text-gray-400 hover:text-gray-200" : "text-gray-600 hover:text-gray-900"}`}
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
-          </button>
+          </Link>
           
           <h1 className={`text-3xl font-bold flex items-center gap-2 ${isDark ? "text-white" : "text-gray-900"}`}>
             <Shield className="w-8 h-8 text-[#3ecf8e]" />
@@ -102,29 +92,9 @@ function NewScan() {
             )}
 
             {/* Select from Targets */}
-            <div>
-              <label className="block text-sm font-medium text-white mb-2">
-                Select from Saved Targets (Optional)
-              </label>
-              <select
-                value={targetId}
-                onChange={handleTargetSelect}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">-- Select a target --</option>
-                {targets.map((target) => (
-                  <option key={target.id} value={target.id}>
-                    {target.name} - {target.url}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="text-center text-gray-500 text-sm">OR</div>
-
             {/* URL Input */}
             <div>
-              <label className="block text-sm font-medium text-gray-500 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                 Target URL *
               </label>
               <input
@@ -133,10 +103,12 @@ function NewScan() {
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://example.com"
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent ${isDark ? "bg-[#1a1d24] border-[#2a2e38] text-white placeholder-gray-500" : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"}`}
               />
-              <p className="text-sm text-gray-500 mt-1">
-                Enter the full URL including http:// or https://
+              <p className={`text-sm mt-1 ${isDark ? "text-gray-500" : "text-gray-500"}`}>
+                {targetId
+                  ? "Loaded from your saved target. You can make adjustments before scanning."
+                  : "Enter the full URL including http:// or https://"}
               </p>
             </div>
 

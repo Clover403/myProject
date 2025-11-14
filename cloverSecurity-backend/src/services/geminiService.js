@@ -1,129 +1,219 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-class GeminiService {
+const CANONICAL_MODELS = {
+  'gemini-flash-latest': 'models/gemini-flash-latest',
+  'gemini-flash-lite-latest': 'models/gemini-flash-lite-latest',
+  'gemini-pro-latest': 'models/gemini-pro-latest',
+  'gemini-2.5-flash': 'models/gemini-2.5-flash',
+  'gemini-2.5-pro': 'models/gemini-2.5-pro',
+  'gemini-2.0-flash': 'models/gemini-2.0-flash',
+  'gemini-2.0-flash-lite': 'models/gemini-2.0-flash-lite',
+  'gemini-2.0-pro-exp': 'models/gemini-2.0-pro-exp',
+};
+
+const LEGACY_ALIASES = {
+  'gemini-flash': 'gemini-flash-latest',
+  'gemini-1.5-flash': 'gemini-flash-latest',
+  'gemini-1.5-flash-latest': 'gemini-flash-latest',
+  'gemini-1.0-flash': 'gemini-flash-latest',
+  'gemini-1.5-pro': 'gemini-pro-latest',
+  'gemini-1.5-pro-latest': 'gemini-pro-latest',
+  'gemini-1.0-pro': 'gemini-pro-latest',
+  'gemini-1.0-pro-latest': 'gemini-pro-latest',
+  'gemini-pro': 'gemini-pro-latest',
+  'gemini-pro-vision': 'gemini-pro-latest',
+  'gemini-1.5': 'gemini-pro-latest',
+  'gemini-1.5-ultra': 'gemini-pro-latest',
+  'gemini-ultra': 'gemini-pro-latest',
+  'gemini-1.5-lite': 'gemini-flash-latest',
+  'gemini-1.5-lite-latest': 'gemini-flash-lite-latest',
+  'gemini-2.5-flash-latest': 'gemini-2.5-flash',
+  'gemini-2.5-pro-latest': 'gemini-2.5-pro',
+  'gemini-2.0-flash-latest': 'gemini-2.0-flash',
+  'gemini-2.0-flash-lite-latest': 'gemini-2.0-flash-lite',
+};
+
+const MODEL_ALIASES = {};
+
+Object.entries(CANONICAL_MODELS).forEach(([key, canonical]) => {
+  const lower = key.toLowerCase();
+  [key, lower].forEach((k) => {
+    MODEL_ALIASES[k] = canonical;
+    MODEL_ALIASES[`models/${k}`] = canonical;
+  });
+});
+
+Object.entries(LEGACY_ALIASES).forEach(([legacy, target]) => {
+  const canonical = CANONICAL_MODELS[target] || CANONICAL_MODELS[target.toLowerCase()];
+  if (!canonical) {
+    return;
+  }
+  const lowerLegacy = legacy.toLowerCase();
+  [legacy, lowerLegacy].forEach((alias) => {
+    MODEL_ALIASES[alias] = canonical;
+    MODEL_ALIASES[`models/${alias}`] = canonical;
+  });
+});
+
+const GEMINI_FALLBACK_MODEL = CANONICAL_MODELS['gemini-flash-latest'];
+
+function normalizeModelId(value) {
+  if (!value) {
+    return GEMINI_FALLBACK_MODEL;
+  }
+
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return GEMINI_FALLBACK_MODEL;
+  }
+
+  const candidates = new Set();
+  candidates.add(trimmed);
+
+  if (trimmed.startsWith('models/')) {
+    const without = trimmed.slice('models/'.length);
+    candidates.add(without);
+    candidates.add(without.toLowerCase());
+  } else {
+    candidates.add(`models/${trimmed}`);
+    candidates.add(trimmed.toLowerCase());
+    candidates.add(`models/${trimmed.toLowerCase()}`);
+  }
+
+  for (const candidate of candidates) {
+    const lower = candidate.toLowerCase();
+    if (MODEL_ALIASES[candidate]) {
+      return MODEL_ALIASES[candidate];
+    }
+    if (MODEL_ALIASES[lower]) {
+      return MODEL_ALIASES[lower];
+    }
+  }
+
+  const canonicalCandidate = trimmed.startsWith('models/') ? trimmed : `models/${trimmed}`;
+  return canonicalCandidate.toLowerCase();
+}
+
+class GeminiProvider {
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY;
-    this.genAI = new GoogleGenerativeAI(this.apiKey);
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
+  this.defaultModel = process.env.GEMINI_MODEL || 'gemini-flash-latest';
+    this._client = null;
   }
 
-  // Generate explanation for vulnerability
-  async explainVulnerability(vulnerability) {
-    try {
-      const prompt = `
-You are a cybersecurity expert. Explain the following security vulnerability in a clear and understandable way.
+  isEnabled() {
+    return Boolean(this.apiKey);
+  }
 
-Vulnerability Details:
-- Type: ${vulnerability.vulnType}
-- Severity: ${vulnerability.severity}
-- Location: ${vulnerability.location}
-- Description: ${vulnerability.description}
+  getSupportedModels() {
+    return Object.keys(CANONICAL_MODELS);
+  }
 
-Please provide:
-1. **Simple Explanation**: Explain what this vulnerability is in simple terms (2-3 sentences)
-2. **Potential Impact**: What could an attacker do if they exploit this? (3-4 bullet points)
-3. **How to Fix**: Step-by-step recommendations to fix this vulnerability (numbered list)
-4. **Additional Resources**: Suggest 2-3 relevant learning resources or documentation links
+  resolveModel(preferredModel) {
+    const pick = preferredModel && preferredModel.trim()
+      ? preferredModel.trim()
+      : this.defaultModel;
 
-Format your response in a structured way with clear sections.
-`;
+    return normalizeModelId(pick);
+  }
 
-      const result = await this.model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
-
-      // Extract sections from response
-      const sections = this.parseAIResponse(text);
-
-      return {
-        explanation: sections.explanation || text,
-        fixRecommendation: sections.fix || '',
-        additionalResources: sections.resources || [],
-        aiModel: 'gemini-pro',
-        tokensUsed: this.estimateTokens(prompt + text)
-      };
-
-    } catch (error) {
-      console.error('Gemini AI Error:', error);
-      throw new Error('Failed to generate AI explanation');
+  get client() {
+    if (!this.isEnabled()) {
+      throw new Error('Gemini provider is not configured');
     }
+
+    if (!this._client) {
+      this._client = new GoogleGenerativeAI(this.apiKey);
+    }
+
+    return this._client;
   }
 
-  // Parse AI response into sections
-  parseAIResponse(text) {
-    const sections = {
-      explanation: '',
-      fix: '',
-      resources: []
+  async chat({ messages, systemPrompt, temperature, maxTokens, model }) {
+    if (!this.isEnabled()) {
+      throw new Error('Gemini provider is not configured');
+    }
+
+    const finalModel = this.resolveModel(model);
+    const genModel = this.client.getGenerativeModel({ model: finalModel });
+
+    const generationConfig = {
+      temperature,
+      maxOutputTokens: maxTokens,
     };
 
-    // Simple parsing logic
-    const lines = text.split('\n');
-    let currentSection = '';
+    const transcript = messages
+      .map((msg) => {
+        const speaker = msg.role === 'assistant' ? 'Assistant' : 'User';
+        return `${speaker}: ${msg.content}`;
+      })
+      .join('\n\n');
 
-    for (const line of lines) {
-      const lower = line.toLowerCase();
-      
-      if (lower.includes('simple explanation') || lower.includes('what is')) {
-        currentSection = 'explanation';
-        continue;
-      } else if (lower.includes('how to fix') || lower.includes('recommendation')) {
-        currentSection = 'fix';
-        continue;
-      } else if (lower.includes('resources') || lower.includes('learn more')) {
-        currentSection = 'resources';
-        continue;
-      }
+    const promptSegments = [];
 
-      if (currentSection === 'explanation') {
-        sections.explanation += line + '\n';
-      } else if (currentSection === 'fix') {
-        sections.fix += line + '\n';
-      } else if (currentSection === 'resources' && line.trim()) {
-        sections.resources.push(line.trim());
-      }
+    if (systemPrompt) {
+      promptSegments.push(systemPrompt);
     }
 
-    return sections;
-  }
+    if (transcript) {
+      promptSegments.push('Conversation so far:\n' + transcript);
+    }
 
-  // Estimate tokens (rough approximation)
-  estimateTokens(text) {
-    return Math.ceil(text.split(/\s+/).length * 1.3);
-  }
+    promptSegments.push('Assistant:');
 
-  // Generate custom security advice
-  async getSecurityAdvice(scanResults) {
+    const prompt = promptSegments.join('\n\n');
+
     try {
-      const prompt = `
-As a cybersecurity consultant, provide a brief security assessment summary based on these scan results:
+      const result = await genModel.generateContent({
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: prompt }],
+          },
+        ],
+        generationConfig,
+      });
 
-Total Vulnerabilities: ${scanResults.totalVulnerabilities}
-Critical: ${scanResults.criticalCount}
-High: ${scanResults.highCount}
-Medium: ${scanResults.mediumCount}
-Low: ${scanResults.lowCount}
-
-Top Vulnerabilities Found:
-${scanResults.topVulns.map((v, i) => `${i + 1}. ${v.vulnType} (${v.severity})`).join('\n')}
-
-Provide:
-1. Overall security rating (Critical/Poor/Fair/Good)
-2. Top 3 priority actions to take
-3. Brief risk assessment (2-3 sentences)
-
-Keep it concise and actionable.
-`;
-
-      const result = await this.model.generateContent(prompt);
       const response = await result.response;
-      return response.text();
+      const text = response.text() || '';
+      const usage = response.usageMetadata || {};
 
+      return {
+        content: text.trim(),
+        model: finalModel,
+        usage: {
+          promptTokenCount: usage.promptTokenCount || 0,
+          candidatesTokenCount: usage.candidatesTokenCount || 0,
+          totalTokenCount: usage.totalTokenCount || 0,
+        },
+      };
     } catch (error) {
-      console.error('Gemini Security Advice Error:', error);
-      throw new Error('Failed to generate security advice');
+      const message = error.response?.error?.message || error.message;
+      console.error('Gemini chat error:', message);
+      const err = new Error(message || 'Failed to generate response with Gemini');
+      err.statusCode = error.response?.status;
+      err.aiProvider = 'gemini';
+      err.aiModel = finalModel;
+
+      if (!err.statusCode && typeof message === 'string') {
+        if (message.includes('401')) {
+          err.statusCode = 401;
+        } else if (message.includes('403')) {
+          err.statusCode = 403;
+        } else if (message.includes('404')) {
+          err.statusCode = 502;
+        } else if (message.toLowerCase().includes('quota')) {
+          err.statusCode = 429;
+        }
+      }
+
+      if (!err.statusCode) {
+        err.statusCode = 502;
+      }
+      throw err;
     }
   }
 }
 
-module.exports = new GeminiService();
+module.exports = new GeminiProvider();

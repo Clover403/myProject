@@ -4,6 +4,11 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Target extends Model {
     static associate(models) {
+      Target.belongsTo(models.User, {
+        foreignKey: 'userId',
+        as: 'user'
+      });
+      
       Target.hasMany(models.Scan, {
         foreignKey: 'targetId',
         as: 'scans'
@@ -11,6 +16,10 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   
+  const tagsDataType = sequelize.getDialect() === 'postgres'
+    ? DataTypes.ARRAY(DataTypes.STRING)
+    : DataTypes.JSON;
+
   Target.init({
     url: {
       type: DataTypes.STRING(500),
@@ -31,7 +40,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     description: DataTypes.TEXT,
     tags: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
+      type: tagsDataType,
       defaultValue: []
     },
     isActive: {
@@ -49,6 +58,8 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'Target',
+    timestamps: true,
+    underscored: false
   });
   
   return Target;

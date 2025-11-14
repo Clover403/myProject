@@ -28,6 +28,8 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'AIExplanation',
+    timestamps: true,
+    underscored: false
   });
   
   return AIExplanation;

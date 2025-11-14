@@ -16,6 +16,6 @@
     "logging": false
   },
   "production": {
-    "use_env_variable": "DATABASE_URL"
+    "use_env_variable": "postgresql://postgres.lntelebxzbkmuzccrrku:Clover*403@aws-1-ap-south-1.pooler.supabase.com:6543/postgres"
   }
 }

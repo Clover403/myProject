@@ -77,7 +77,7 @@ function ScanDetail() {
       return null;
     }
 
-    return {
+     return {
       scanId: scan.id,
       url: scan.url,
       status: scan.status,
@@ -99,7 +99,7 @@ function ScanDetail() {
   }, [scan]);
 
   const chatSuggestions = useMemo(() => {
-    if (!scan) {
+    if (!scan) { 
       return [
         'Summarise the key risks from this scan.',
         'Outline the next remediation steps I should take.',

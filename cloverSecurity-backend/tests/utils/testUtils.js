@@ -1,7 +1,9 @@
 const jwt = require('jsonwebtoken');
-const db = require('../../models');
+
+const getDb = () => require('../../models');
 
 async function createTestUser(overrides = {}) {
+  const db = getDb();
   return db.User.create({
     email: overrides.email || `user${Date.now()}@example.com`,
     name: overrides.name || 'Test User',
@@ -30,6 +32,7 @@ function authHeader(user) {
 }
 
 async function createTarget(user, overrides = {}) {
+  const db = getDb();
   return db.Target.create({
     url: overrides.url || 'https://example.com',
     name: overrides.name || 'Example Target',
@@ -41,6 +44,7 @@ async function createTarget(user, overrides = {}) {
 }
 
 async function createScan(user, overrides = {}) {
+  const db = getDb();
   return db.Scan.create({
     url: overrides.url || 'https://example.com',
     scanType: overrides.scanType || 'quick',

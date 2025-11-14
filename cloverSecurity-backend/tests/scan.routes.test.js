@@ -15,7 +15,17 @@ const virusTotalService = require('../src/services/virusTotalService');
 
 const waitForAsyncJobs = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-const waitForScanToFinish = async (scanId, attempts = 15) => {
+const createDeferred = () => {
+  let resolve;
+  let reject;
+  const promise = new Promise((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+};
+
+const waitForScanToFinish = async (scanId, attempts = 20) => {
   for (let i = 0; i < attempts; i += 1) {
     await waitForAsyncJobs();
     const scan = await db.Scan.findByPk(scanId);
@@ -103,6 +113,92 @@ describe('Scan Routes', () => {
     expect(updatedScan.virustotalStats).toEqual(
       expect.objectContaining({ malicious: 0, suspicious: 0 })
     );
+  });
+
+  test('scan progress moves through lifecycle milestones', async () => {
+    const zapDeferred = createDeferred();
+    const virusDeferred = createDeferred();
+
+    const zapResult = {
+      success: true,
+      vulnerabilities: [],
+      totalVulnerabilities: 0,
+      criticalCount: 0,
+      highCount: 0,
+      mediumCount: 0,
+      lowCount: 0,
+    };
+
+    zapService.performFullScan.mockImplementation(() => zapDeferred.promise);
+    virusTotalService.scanUrl.mockImplementation(() => virusDeferred.promise);
+
+    const startResponse = await request(app)
+      .post('/api/scans')
+      .set('Authorization', token)
+      .send({ url: target.url, scanType: 'quick', targetId: target.id })
+      .expect(201);
+
+    await waitForAsyncJobs();
+    let scanRecord = await db.Scan.findByPk(startResponse.body.scan.id);
+    expect(scanRecord.status).toBe('scanning');
+    expect(scanRecord.progress).toBe(10);
+
+    zapDeferred.resolve(zapResult);
+    await waitForAsyncJobs();
+    scanRecord = await db.Scan.findByPk(startResponse.body.scan.id);
+    expect(scanRecord.progress).toBe(55);
+
+    virusDeferred.resolve({
+      verdict: 'harmless',
+      maliciousCount: 0,
+      suspiciousCount: 0,
+      harmlessCount: 68,
+      undetectedCount: 4,
+      stats: {
+        harmless: 68,
+        malicious: 0,
+        suspicious: 0,
+        undetected: 4,
+      },
+      lastAnalysisDate: new Date().toISOString(),
+      permalink: 'https://virustotal.example/report',
+    });
+
+    scanRecord = await waitForScanToFinish(startResponse.body.scan.id);
+    expect(scanRecord.status).toBe('completed');
+    expect(scanRecord.progress).toBe(100);
+  });
+
+  test('marks scan as failed when ZAP scan throws', async () => {
+    zapService.performFullScan.mockRejectedValue(new Error('ZAP unavailable'));
+
+    const response = await request(app)
+      .post('/api/scans')
+      .set('Authorization', token)
+      .send({ url: target.url, scanType: 'quick', targetId: target.id })
+      .expect(201);
+
+    const scanRecord = await waitForScanToFinish(response.body.scan.id);
+    expect(scanRecord.status).toBe('failed');
+    expect(scanRecord.progress).toBe(100);
+    expect(scanRecord.errorMessage).toContain('ZAP unavailable');
+  });
+
+  test('handles VirusTotal errors gracefully', async () => {
+    virusTotalService.scanUrl.mockResolvedValue({ error: 'quota exceeded' });
+
+    const response = await request(app)
+      .post('/api/scans')
+      .set('Authorization', token)
+      .send({ url: target.url, scanType: 'quick', targetId: target.id })
+      .expect(201);
+
+    const completedScan = await waitForScanToFinish(response.body.scan.id);
+    expect(completedScan.status).toBe('completed');
+    expect(completedScan.progress).toBe(100);
+    expect(completedScan.virustotalVerdict).toBe('error');
+    expect(completedScan.virustotalStats).toEqual({ error: 'quota exceeded' });
+    expect(completedScan.virustotalMaliciousCount).toBeNull();
   });
 
   test('GET /api/scans returns scans with target data', async () => {
@@ -223,5 +319,12 @@ describe('Scan Routes', () => {
 
     const foundScan = await db.Scan.findByPk(res.body.scan.id);
     expect(foundScan).toBeNull();
+  });
+
+  test('requires authentication to start a scan', async () => {
+    await request(app)
+      .post('/api/scans')
+      .send({ url: target.url, scanType: 'quick', targetId: target.id })
+      .expect(401);
   });
 });

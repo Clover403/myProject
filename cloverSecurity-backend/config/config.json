@@ -7,15 +7,15 @@
     "dialect": "postgres"
   },
   "test": {
-    "dialect": "sqlite",
-    "storage": ":memory:",
+    "username": "postgres",
+    "password": "postgres",
+    "database": "Clover_security_test",
+    "host": "127.0.0.1",
+    "port": 5432,
+    "dialect": "postgres",
     "logging": false
   },
   "production": {
-    "username": "postgres",
-    "password": "postgres",
-    "database": "Clover_security_production",
-    "host": "127.0.0.1",
-    "dialect": "postgres"
+    "use_env_variable": "DATABASE_URL"
   }
 }

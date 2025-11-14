@@ -91,7 +91,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Root route (ensure proper response for http://localhost:5000)
+// Root route (ensure proper response for http://localhost:5000) //unutk ngecek
 app.get('/', (req, res) => {
   res.send(`
     <h2>✅ SecureCheck Backend is Running</h2>

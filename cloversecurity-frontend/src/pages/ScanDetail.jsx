@@ -87,7 +87,7 @@ function ScanDetail() {
         critical: scan.criticalCount,
         high: scan.highCount,
         medium: scan.mediumCount,
-         low: scan.lowCount,
+        low: scan.lowCount,
       },
       vulnerabilities: (scan.vulnerabilities || []).slice(0, 6).map((vuln) => ({
         id: vuln.id,

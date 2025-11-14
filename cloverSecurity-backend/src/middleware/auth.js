@@ -3,36 +3,27 @@ const { User } = require('../../models');
 
 // Authentication middleware to check if user is logged in
 // Supports both session-based (Passport) and JWT token-based authentication
+// src/middleware/auth.js - pastikan seperti ini
 const requireAuth = async (req, res, next) => {
   try {
-    // Skip auth check for OPTIONS (CORS preflight)
     if (req.method === 'OPTIONS') {
       return next();
     }
 
-    // Check session first (Passport session auth)
-    if (req.user) {
-      return next();
-    }
-
-    // Check JWT token in Authorization header
+    // Check JWT token
     const token = req.headers.authorization?.split(' ')[1];
     
     if (!token) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    // Verify JWT token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    
-    // Get user from database
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findByPk(decoded.id);
     
     if (!user) {
       return res.status(401).json({ error: 'User not found' });
     }
 
-    // Attach user to request object
     req.user = user;
     next();
   } catch (error) {
@@ -40,7 +31,6 @@ const requireAuth = async (req, res, next) => {
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 };
-
 module.exports = {
   requireAuth
 };

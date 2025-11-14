@@ -5,10 +5,17 @@ class TargetController {
   async createTarget(req, res) {
     try {
       const { url, name, description, tags } = req.body;
+      const userId = req.user?.id;
+
+      console.log('➕ Creating target:', { url, name, userId });
 
       // Validate input
       if (!url || !name) {
         return res.status(400).json({ error: 'URL and name are required' });
+      }
+
+      if (!userId) {
+        return res.status(401).json({ error: 'User authentication required' });
       }
 
       // Basic URL validation
@@ -16,20 +23,21 @@ class TargetController {
         return res.status(400).json({ error: 'URL must start with http:// or https://' });
       }
 
-      // Check if target already exists
-      const existingTarget = await Target.findOne({ where: { url } });
+      // Check if target already exists for this user
+      const existingTarget = await Target.findOne({ where: { url, userId } });
       if (existingTarget) {
         return res.status(409).json({ error: 'Target with this URL already exists' });
       }
 
       const target = await Target.create({
-        url,
-        name,
-        description: description || null,
-        tags: tags || [],
-        // userId bisa di-set dari authenticated user nanti
-        // untuk saat ini, biarkan nullable
+        url: url.trim(),
+        name: name.trim(),
+        description: description ? description.trim() : null,
+        tags: Array.isArray(tags) ? tags : (tags ? tags.split(',').map(t => t.trim()) : []),
+        userId: parseInt(userId)
       });
+
+      console.log('✅ Target created:', { id: target.id, url: target.url });
 
       return res.status(201).json({
         message: 'Target created successfully',
@@ -37,13 +45,14 @@ class TargetController {
       });
 
     } catch (error) {
-      console.error('Create Target Error:', error);
+      console.error('❌ Create Target Error:', error);
       console.error('Error Stack:', error.stack);
       console.error('Error Details:', {
         name: error.name,
         message: error.message,
         code: error.code,
         detail: error.detail,
+        sql: error.sql,
         originalError: error.originalError?.message
       });
       

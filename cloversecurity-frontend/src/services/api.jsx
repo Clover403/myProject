@@ -73,10 +73,16 @@ export const targetAPI = {
 
 // AI API
 export const aiAPI = {
-  explainVulnerability: (vulnerabilityId) =>
-    api.post(`/ai/explain/${vulnerabilityId}`),
-  getSecurityAdvice: (scanId) => api.get(`/ai/advice/${scanId}`),
-  chatWithAI: (data) => api.post("/ai/chat", data),
+  explainVulnerability: (vulnerabilityId, settings) =>
+    api.post(`/ai/explain/${vulnerabilityId}`, {
+      settings,
+    }),
+  getSecurityAdvice: (scanId, settings) =>
+    api.get(`/ai/advice/${scanId}`, {
+      params: settings,
+    }),
+  chat: (payload, config = {}) => api.post('/ai/chat', payload, config),
+  getMeta: () => api.get('/ai/meta'),
 };
 
 export default api;

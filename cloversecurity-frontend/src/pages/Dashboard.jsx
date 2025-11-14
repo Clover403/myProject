@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { scanAPI, targetAPI } from "../services/api";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import { useTheme } from "../context/ThemeContext";
 import {
   Shield,
@@ -129,158 +130,160 @@ function Dashboard() {
   }
 
   return (
-    <div className={`min-h-screen ${isDark ? "bg-[#0f1117] text-gray-200" : "bg-white text-gray-900"}`}>
+    <div className={`min-h-screen flex flex-col ${isDark ? "bg-[#0f1117] text-gray-200" : "bg-white text-gray-900"}`}>
       <Navbar />
 
-      {/* Header */}
-      <div className={`border-b py-8 ${isDark ? "border-[#1a1d24] bg-[#111318]" : "border-gray-200 bg-gray-50"}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-center justify-center gap-3">
-            <div className={`p-3 rounded-lg ${isDark ? "bg-[#3ecf8e]/10" : "bg-green-100"}`}>
-              <Activity className="w-6 h-6 text-[#3ecf8e]" />
+      <main className="flex-1">
+        {/* Header */}
+        <div className={`border-b py-8 ${isDark ? "border-[#1a1d24] bg-[#111318]" : "border-gray-200 bg-gray-50"}`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col items-center justify-center gap-3">
+              <div className={`p-3 rounded-lg ${isDark ? "bg-[#3ecf8e]/10" : "bg-green-100"}`}>
+                <Activity className="w-6 h-6 text-[#3ecf8e]" />
+              </div>
+              <h1 className={`text-3xl font-semibold tracking-tight ${isDark ? "text-white" : "text-gray-900"}`}>
+                Dashboard
+              </h1>
+              <p className={isDark ? "text-gray-400" : "text-gray-600"}>Your security monitoring overview</p>
             </div>
-            <h1 className={`text-3xl font-semibold tracking-tight ${isDark ? "text-white" : "text-gray-900"}`}>
-              Dashboard
-            </h1>
-            <p className={isDark ? "text-gray-400" : "text-gray-600"}>Your security monitoring overview</p>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 ${isDark ? "bg-[#0f1117]" : "bg-white"}`}>
-        <div className="space-y-8">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-            {[
-              {
-                title: "Total Scans",
-                value: stats?.totalScans || 0,
-                icon: Zap,
-              },
-              {
-                title: "Active Scans",
-                value: stats?.activeScans || 0,
-                icon: Activity,
-              },
-              {
-                title: "Vulnerabilities",
-                value: stats?.vulnerabilitiesFound || 0,
-                icon: AlertTriangle,
-              },
-              {
-                title: "Completed Scans",
-                value: stats?.completedScans || 0,
-                icon: CheckCircle,
-              },
-            ].map(({ title, value, icon: Icon }, i) => (
-              <div
-                key={i}
-                className={`border rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 ${isDark ? "bg-[#1a1d24] border-[#2a2e38] hover:border-[#3ecf8e]/30" : "bg-gray-50 border-gray-200 hover:border-green-400"}`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <p className={`text-sm font-medium mb-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                      {title}
-                    </p>
-                    <p className={`text-3xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
-                      {value}
-                    </p>
-                  </div>
-                  <div className={`p-3 rounded-lg ${isDark ? "bg-[#3ecf8e]/10" : "bg-green-100"}`}>
-                    <Icon className="w-5 h-5 text-[#3ecf8e]" />
+        {/* Main Content */}
+        <section className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 ${isDark ? "bg-[#0f1117]" : "bg-white"}`}>
+          <div className="space-y-8">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+              {[
+                {
+                  title: "Total Scans",
+                  value: stats?.totalScans || 0,
+                  icon: Zap,
+                },
+                {
+                  title: "Active Scans",
+                  value: stats?.activeScans || 0,
+                  icon: Activity,
+                },
+                {
+                  title: "Vulnerabilities",
+                  value: stats?.vulnerabilitiesFound || 0,
+                  icon: AlertTriangle,
+                },
+                {
+                  title: "Completed Scans",
+                  value: stats?.completedScans || 0,
+                  icon: CheckCircle,
+                },
+              ].map(({ title, value, icon: Icon }, i) => (
+                <div
+                  key={i}
+                  className={`border rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 ${isDark ? "bg-[#1a1d24] border-[#2a2e38] hover:border-[#3ecf8e]/30" : "bg-gray-50 border-gray-200 hover:border-green-400"}`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className={`text-sm font-medium mb-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                        {title}
+                      </p>
+                      <p className={`text-3xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                        {value}
+                      </p>
+                    </div>
+                    <div className={`p-3 rounded-lg ${isDark ? "bg-[#3ecf8e]/10" : "bg-green-100"}`}>
+                      <Icon className="w-5 h-5 text-[#3ecf8e]" />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Quick Add Target Section */}
-          <div className={`border rounded-xl shadow-lg overflow-hidden ${isDark ? "bg-[#1a1d24] border-[#2a2e38]" : "bg-gray-50 border-gray-200"}`}>
-            <div className={`px-6 py-4 border-b ${isDark ? "border-[#2a2e38]" : "border-gray-200"}`}>
-              <h2 className={`text-xl font-semibold flex items-center gap-2 ${isDark ? "text-white" : "text-gray-900"}`}>
-                <Plus className="w-5 h-5 text-[#3ecf8e]" />
-                Quick Add Target
-              </h2>
-              <p className={`text-sm mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                Add a new target directly from dashboard
-              </p>
+              ))}
             </div>
 
-            <div className={`px-6 py-6 ${isDark ? "bg-[#0f1117]/50" : "bg-white"}`}>
-              <form onSubmit={handleAddTarget} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                  <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
-                    Website URL
-                  </label>
-                  <div className="relative">
-                    <Globe className={`absolute left-3 top-3.5 w-4 h-4 ${isDark ? "text-gray-600" : "text-gray-400"}`} />
+            {/* Quick Add Target Section */}
+            <div className={`border rounded-xl shadow-lg overflow-hidden ${isDark ? "bg-[#1a1d24] border-[#2a2e38]" : "bg-gray-50 border-gray-200"}`}>
+              <div className={`px-6 py-4 border-b ${isDark ? "border-[#2a2e38]" : "border-gray-200"}`}>
+                <h2 className={`text-xl font-semibold flex items-center gap-2 ${isDark ? "text-white" : "text-gray-900"}`}>
+                  <Plus className="w-5 h-5 text-[#3ecf8e]" />
+                  Quick Add Target
+                </h2>
+                <p className={`text-sm mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                  Add a new target directly from dashboard
+                </p>
+              </div>
+
+              <div className={`px-6 py-6 ${isDark ? "bg-[#0f1117]/50" : "bg-white"}`}>
+                <form onSubmit={handleAddTarget} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                      Website URL
+                    </label>
+                    <div className="relative">
+                      <Globe className={`absolute left-3 top-3.5 w-4 h-4 ${isDark ? "text-gray-600" : "text-gray-400"}`} />
+                      <input
+                        type="url"
+                        value={targetFormData.url}
+                        onChange={(e) => setTargetFormData({ ...targetFormData, url: e.target.value })}
+                        placeholder="https://example.com"
+                        required
+                        className={`w-full pl-9 pr-3 py-2.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition ${isDark ? "bg-[#1a1d24] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                      Target Name
+                    </label>
                     <input
-                      type="url"
-                      value={targetFormData.url}
-                      onChange={(e) => setTargetFormData({ ...targetFormData, url: e.target.value })}
-                      placeholder="https://example.com"
+                      type="text"
+                      value={targetFormData.name}
+                      onChange={(e) => setTargetFormData({ ...targetFormData, name: e.target.value })}
+                      placeholder="e.g., Production"
                       required
-                      className={`w-full pl-9 pr-3 py-2.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition ${isDark ? "bg-[#1a1d24] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
+                      className={`w-full px-3 py-2.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition ${isDark ? "bg-[#1a1d24] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
-                    Target Name
-                  </label>
-                  <input
-                    type="text"
-                    value={targetFormData.name}
-                    onChange={(e) => setTargetFormData({ ...targetFormData, name: e.target.value })}
-                    placeholder="e.g., Production"
-                    required
-                    className={`w-full px-3 py-2.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition ${isDark ? "bg-[#1a1d24] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
-                  />
-                </div>
+                  <div>
+                    <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                      Tags
+                    </label>
+                    <input
+                      type="text"
+                      value={targetFormData.tags}
+                      onChange={(e) => setTargetFormData({ ...targetFormData, tags: e.target.value })}
+                      placeholder="e.g., production"
+                      className={`w-full px-3 py-2.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition ${isDark ? "bg-[#1a1d24] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
+                    />
+                  </div>
 
-                <div>
-                  <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
-                    Tags
-                  </label>
-                  <input
-                    type="text"
-                    value={targetFormData.tags}
-                    onChange={(e) => setTargetFormData({ ...targetFormData, tags: e.target.value })}
-                    placeholder="e.g., production"
-                    className={`w-full px-3 py-2.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition ${isDark ? "bg-[#1a1d24] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
-                  />
-                </div>
+                  <div className="flex items-end gap-2">
+                    <button
+                      type="submit"
+                      disabled={addingTarget}
+                      className="flex-1 bg-[#3ecf8e] hover:bg-[#52ffb2] text-black font-semibold py-2.5 rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Target
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddTargetModal(true)}
+                      className={`px-3 py-2.5 text-sm rounded-lg border font-semibold transition ${isDark ? "border-[#2a2e38] text-gray-300 hover:bg-[#2a2e38]" : "border-gray-300 text-gray-700 hover:bg-gray-100"}`}
+                    >
+                      Details
+                    </button>
+                  </div>
+                </form>
 
-                <div className="flex items-end gap-2">
-                  <button
-                    type="submit"
-                    disabled={addingTarget}
-                    className="flex-1 bg-[#3ecf8e] hover:bg-[#52ffb2] text-black font-semibold py-2.5 rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Target
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowAddTargetModal(true)}
-                    className={`px-3 py-2.5 text-sm rounded-lg border font-semibold transition ${isDark ? "border-[#2a2e38] text-gray-300 hover:bg-[#2a2e38]" : "border-gray-300 text-gray-700 hover:bg-gray-100"}`}
-                  >
-                    Details
-                  </button>
-                </div>
-              </form>
-
-              {addTargetError && (
-                <div className={`mt-4 p-3 rounded-lg flex items-start gap-3 ${isDark ? "bg-red-500/20 border border-red-500/30" : "bg-red-50 border border-red-200"}`}>
-                  <AlertCircle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isDark ? "text-red-400" : "text-red-600"}`} />
-                  <p className={isDark ? "text-red-300 text-sm" : "text-red-700 text-sm"}>{addTargetError}</p>
-                </div>
-              )}
+                {addTargetError && (
+                  <div className={`mt-4 p-3 rounded-lg flex items-start gap-3 ${isDark ? "bg-red-500/20 border border-red-500/30" : "bg-red-50 border border-red-200"}`}>
+                    <AlertCircle className={`w-5 h-5 shrink-0 mt-0.5 ${isDark ? "text-red-400" : "text-red-600"}`} />
+                    <p className={isDark ? "text-red-300 text-sm" : "text-red-700 text-sm"}>{addTargetError}</p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-          <div className={`border rounded-xl shadow-lg overflow-hidden ${isDark ? "bg-[#1a1d24] border-[#2a2e38]" : "bg-gray-50 border-gray-200"}`}>
+
+            <div className={`border rounded-xl shadow-lg overflow-hidden ${isDark ? "bg-[#1a1d24] border-[#2a2e38]" : "bg-gray-50 border-gray-200"}`}>
             {/* Table Header */}
             <div className={`px-6 py-4 border-b ${isDark ? "border-[#2a2e38]" : "border-gray-200"}`}>
               <div className="flex items-center justify-between">
@@ -316,7 +319,7 @@ function Dashboard() {
                           Status
                         </th>
                         <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                          Vulnerabilities
+                          Vuln
                         </th>
                         <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                           Severity
@@ -336,7 +339,16 @@ function Dashboard() {
                           className={`transition-colors ${isDark ? "hover:bg-[#232630]" : "hover:bg-gray-100"}`}
                         >
                           <td className={`px-6 py-4 font-medium ${isDark ? "text-gray-200" : "text-gray-900"}`}>
-                            {scan.targetUrl}
+                            <div className="flex flex-col">
+                              {scan.targetName && (
+                                <span className="text-sm font-semibold">
+                                  {scan.targetName}
+                                </span>
+                              )}
+                              <span className={`${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                                {scan.targetUrl || scan.url}
+                              </span>
+                            </div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2">
@@ -347,15 +359,13 @@ function Dashboard() {
                             </div>
                           </td>
                           <td className={`px-6 py-4 font-medium ${isDark ? "text-gray-300" : "text-gray-900"}`}>
-                            {scan.vulnerabilities?.length || 0}
+                            {typeof scan.totalVulnerabilities === 'number'
+                              ? scan.totalVulnerabilities
+                              : scan.vulnerabilities?.length || 0}
                           </td>
                           <td className="px-6 py-4">
-                            <span
-                              className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold border ${getSeverityBadge(
-                                scan.severityLevel
-                              )}`}
-                            >
-                              {scan.severityLevel || "N/A"}
+                            <span className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                              {scan.severityLevel === 'none' ? 'No findings' : (scan.severityLevel || 'N/A')}
                             </span>
                           </td>
                           <td className={`px-6 py-4 text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
@@ -399,9 +409,12 @@ function Dashboard() {
                 </div>
               )}
             </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </section>
+      </main>
+
+      <Footer />
 
       {/* Add Target Modal (Detailed Form) */}
       {showAddTargetModal && (
@@ -475,7 +488,7 @@ function Dashboard() {
 
               {addTargetError && (
                 <div className={`p-3 rounded-lg flex items-start gap-3 ${isDark ? "bg-red-500/20 border border-red-500/30" : "bg-red-50 border border-red-200"}`}>
-                  <AlertCircle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isDark ? "text-red-400" : "text-red-600"}`} />
+                  <AlertCircle className={`w-5 h-5 shrink-0 mt-0.5 ${isDark ? "text-red-400" : "text-red-600"}`} />
                   <p className={isDark ? "text-red-300 text-sm" : "text-red-700 text-sm"}>{addTargetError}</p>
                 </div>
               )}
@@ -500,7 +513,7 @@ function Dashboard() {
           </div>
         </div>
       )}
-    </div>
+  </div>
   );
 }
 

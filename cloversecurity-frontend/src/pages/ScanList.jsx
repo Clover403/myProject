@@ -1,8 +1,8 @@
-import React,{ useState, useEffect } from 'react';
+import React,{ useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { scanAPI } from '../services/api';
 import { useTheme } from '../context/ThemeContext';
-import { ArrowLeft, Trash2, Search } from 'lucide-react';
+import { ArrowLeft, Trash2, Search, AlertOctagon, AlertTriangle, ShieldCheck } from 'lucide-react';
 
 function ScanList() {
   const { isDark } = useTheme();
@@ -10,20 +10,42 @@ function ScanList() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    fetchScans();
-  }, []);
-
-  const fetchScans = async () => {
+  const fetchScans = useCallback(async ({ showLoader = false } = {}) => {
     try {
+      if (showLoader) {
+        setLoading(true);
+      }
+
       const response = await scanAPI.getAllScans({ limit: 50 });
       setScans(response.data.scans);
     } catch (error) {
       console.error('Failed to fetch scans:', error);
     } finally {
-      setLoading(false);
+      if (showLoader) {
+        setLoading(false);
+      }
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchScans({ showLoader: true });
+  }, [fetchScans]);
+
+  useEffect(() => {
+    const hasActiveScan = scans.some(
+      (scan) => scan.status === 'pending' || scan.status === 'scanning'
+    );
+
+    if (!hasActiveScan) {
+      return undefined;
+    }
+
+    const intervalId = setInterval(() => {
+      fetchScans();
+    }, 8000);
+
+    return () => clearInterval(intervalId);
+  }, [scans, fetchScans]);
 
   const handleDelete = async (id, e) => {
     e.preventDefault();
@@ -32,8 +54,8 @@ function ScanList() {
     }
 
     try {
-      await scanAPI.deleteScan(id);
-      setScans(scans.filter(scan => scan.id !== id));
+  await scanAPI.deleteScan(id);
+  await fetchScans({ showLoader: true });
     } catch (error) {
       alert('Failed to delete scan');
     }
@@ -135,15 +157,24 @@ function ScanList() {
                     </td>
                     <td className="px-6 py-4">
                       {scan.status === 'completed' ? (
-                        <div className="flex gap-2">
+                        <div className="flex gap-3 items-center">
                           {scan.criticalCount > 0 && (
-                            <span className="text-red-600 text-sm">🔴 {scan.criticalCount}</span>
+                            <span className={`inline-flex items-center gap-1 text-sm font-medium ${isDark ? 'text-red-300' : 'text-red-600'}`}>
+                              <AlertOctagon className="w-4 h-4" />
+                              {scan.criticalCount}
+                            </span>
                           )}
                           {scan.highCount > 0 && (
-                            <span className="text-orange-600 text-sm">🟠 {scan.highCount}</span>
+                            <span className={`inline-flex items-center gap-1 text-sm font-medium ${isDark ? 'text-amber-300' : 'text-amber-600'}`}>
+                              <AlertTriangle className="w-4 h-4" />
+                              {scan.highCount}
+                            </span>
                           )}
                           {scan.totalVulnerabilities === 0 && (
-                            <span className="text-green-600 text-sm">✅ Clean</span>
+                            <span className={`inline-flex items-center gap-1 text-sm font-medium ${isDark ? 'text-green-300' : 'text-green-600'}`}>
+                              <ShieldCheck className="w-4 h-4" />
+                              Clean
+                            </span>
                           )}
                         </div>
                       ) : (

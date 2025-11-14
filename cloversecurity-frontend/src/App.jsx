@@ -14,6 +14,8 @@ import ScanDetail from "./pages/ScanDetail";
 import Targets from "./pages/Targets";
 import Login from "./pages/Login";
 import AuthCallback from "./pages/AuthCallback";
+import AIChat from "./pages/AIChat";
+import OwaspTop10 from "./pages/OwaspTop10";
 
 // Protected Route Component
 function ProtectedRoute({ element }) {
@@ -33,23 +35,39 @@ function ProtectedRoute({ element }) {
 function App() {
   const dispatch = useDispatch();
   const { token, isAuthenticated, user, loading } = useSelector((state) => state.auth);
-  const [verificationAttempted, setVerificationAttempted] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    // Verify token on app load if token exists (only once!)
-    const storedToken = localStorage.getItem('authToken');
-    
-    // Only verify if:
-    // 1. We haven't attempted verification yet
-    // 2. There's a stored token
-    // 3. We don't have user data yet
-    // 4. Not currently loading
-    if (!verificationAttempted && storedToken && !user && !loading) {
-      console.log('🔍 Verifying stored token...');
-      setVerificationAttempted(true);
-      dispatch(verifyToken(storedToken));
-    }
-  }, [verificationAttempted, dispatch, user, loading]);
+    // HANYA verify token SEKALI saat app pertama kali dimuat
+    const initAuth = async () => {
+      const storedToken = localStorage.getItem('authToken');
+      
+      // Jika ada token dan belum punya data user, verify
+      if (storedToken && !user && !initialized) {
+        console.log('🔍 Verifying stored token on app init...');
+        try {
+          await dispatch(verifyToken(storedToken)).unwrap();
+        } catch (error) {
+          console.error('❌ Token verification failed:', error);
+          // Token invalid, hapus dari localStorage
+          localStorage.removeItem('authToken');
+        }
+      }
+      
+      setInitialized(true);
+    };
+
+    initAuth();
+  }, []); // HANYA jalankan sekali saat mount!
+
+  // Show loading hanya saat initialization
+  if (!initialized) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#0f1117]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3ecf8e]"></div>
+      </div>
+    );
+  }
 
   return (
     <Router>
@@ -79,9 +97,17 @@ function App() {
           path="/targets"
           element={<ProtectedRoute element={<Targets />} />}
         />
+        <Route
+          path="/ai"
+          element={<ProtectedRoute element={<AIChat />} />}
+        />
+        <Route
+          path="/owasp-top-10"
+          element={<ProtectedRoute element={<OwaspTop10 />} />}
+        />
 
-        {/* Redirect unknown routes to login */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        {/* Redirect unknown routes */}
+        <Route path="*" element={<Navigate to={isAuthenticated ? "/" : "/login"} replace />} />
       </Routes>
     </Router>
   );

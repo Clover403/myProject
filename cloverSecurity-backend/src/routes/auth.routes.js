@@ -4,21 +4,40 @@ const passport = require('passport');
 const jwt = require('jsonwebtoken');
 
 // Google OAuth login
-router.get('/google', passport.authenticate('google', {
-  scope: ['profile', 'email']
-}));
+router.get('/google', 
+  (req, res, next) => {
+    console.log('🚀 Starting Google OAuth login...');
+    next();
+  },
+  passport.authenticate('google', {
+    scope: ['profile', 'email']
+  })
+);
 
-// Google OAuth callback - FIXED VERSION
+// Google OAuth callback - SUPER FIXED VERSION
 router.get('/google/callback',
+  (req, res, next) => {
+    console.log('📥 Received OAuth callback from Google');
+    next();
+  },
   passport.authenticate('google', { 
     failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=auth_failed`,
-    session: false  // Disable session since we're using JWT
+    session: false
   }),
   async (req, res) => {
     try {
+      console.log('✅ Passport authentication successful');
+      
       if (!req.user) {
+        console.error('❌ No user object in request');
         return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=no_user`);
       }
+
+      console.log('👤 User authenticated:', {
+        id: req.user.id,
+        email: req.user.email,
+        name: req.user.name
+      });
 
       // Generate JWT token
       const token = jwt.sign(
@@ -31,17 +50,21 @@ router.get('/google/callback',
         { expiresIn: '7d' }
       );
 
+      console.log('🔑 JWT token generated');
+
       // Update last login
       await req.user.update({ lastLogin: new Date() });
 
-      // Redirect to frontend with token
       const frontendURL = process.env.FRONTEND_URL || 'http://localhost:5173';
+      const redirectURL = `${frontendURL}/auth/callback?token=${token}`;
       
-      // PENTING: Redirect ke route khusus untuk handle OAuth callback
-      res.redirect(`${frontendURL}/auth/callback?token=${token}`);
+      console.log('🔀 Redirecting to:', redirectURL);
+      
+      // CRITICAL: Use 302 redirect
+      res.redirect(redirectURL);
       
     } catch (error) {
-      console.error('OAuth callback error:', error);
+      console.error('❌ OAuth callback error:', error);
       res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=server_error`);
     }
   }
@@ -53,17 +76,21 @@ router.get('/me', async (req, res) => {
     const token = req.headers.authorization?.split(' ')[1];
     
     if (!token) {
+      console.log('❌ No token in /me request');
       return res.status(401).json({ error: 'No token provided' });
     }
 
+    console.log('🔍 Verifying token for /me endpoint');
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
     const { User } = require('../../models');
     const user = await User.findByPk(decoded.id);
 
     if (!user) {
+      console.log('❌ User not found for token');
       return res.status(401).json({ error: 'User not found' });
     }
 
+    console.log('✅ User found:', user.email);
     res.json({
       success: true,
       user: {
@@ -75,7 +102,7 @@ router.get('/me', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Get current user error:', error);
+    console.error('❌ /me endpoint error:', error.message);
     res.status(401).json({ error: 'Invalid token' });
   }
 });
@@ -86,17 +113,21 @@ router.post('/verify-token', async (req, res) => {
     const token = req.headers.authorization?.split(' ')[1];
     
     if (!token) {
+      console.log('❌ No token in verify request');
       return res.status(401).json({ error: 'No token provided' });
     }
 
+    console.log('🔍 Verifying token...');
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
     const { User } = require('../../models');
     const user = await User.findByPk(decoded.id);
 
     if (!user) {
+      console.log('❌ User not found in database');
       return res.status(401).json({ error: 'User not found' });
     }
 
+    console.log('✅ Token verified for user:', user.email);
     res.json({
       success: true,
       user: {
@@ -108,7 +139,7 @@ router.post('/verify-token', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Token verification error:', error);
+    console.error('❌ Token verification failed:', error.message);
     res.status(401).json({ error: 'Invalid token' });
   }
 });
@@ -116,6 +147,7 @@ router.post('/verify-token', async (req, res) => {
 // Logout
 router.post('/logout', async (req, res) => {
   try {
+    console.log('👋 User logged out');
     res.json({ success: true, message: 'Logged out successfully' });
   } catch (error) {
     console.error('Logout error:', error);

@@ -1,18 +1,20 @@
 import React, { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom';
+// Hapus 'useNavigate' dan 'useSelector' karena kita tidak lagi melakukan redirect dari sini
 import { useTheme } from '../context/ThemeContext';
 import { Shield, ArrowRight, CheckCircle, AlertCircle } from 'lucide-react';
 
 function Login() {
-  const navigate = useNavigate();
   const { isDark } = useTheme();
   const [searchParams] = useSearchParams();
-  const { isAuthenticated, loading } = useSelector((state) => state.auth);
+  
+  // HAPUS: Logika state isAuthenticated dan loading dari Redux tidak diperlukan lagi di file ini
+  // const { isAuthenticated, loading } = useSelector((state) => state.auth);
+  
   const [error, setError] = React.useState('');
 
   useEffect(() => {
-    // Check for error from OAuth callback
+    // EFEK INI BOLEH TETAP ADA: Hanya untuk menampilkan pesan error dari callback
     const errorParam = searchParams.get('error');
     if (errorParam) {
       const errorMessages = {
@@ -22,12 +24,19 @@ function Login() {
       };
       setError(errorMessages[errorParam] || 'Authentication failed');
     }
+  }, [searchParams]);
 
+  // HAPUS SEMUA BLOK useEffect YANG INI:
+  // Logika ini sekarang ditangani oleh <PublicLayout> di App.jsx,
+  // menyimpannya di sini menyebabkan konflik dan loop.
+  /*
+  useEffect(() => {
     // Redirect if already authenticated (but not if loading)
     if (isAuthenticated && !loading) {
       navigate('/', { replace: true });
     }
   }, [isAuthenticated, navigate, searchParams, loading]);
+  */
 
   const handleGoogleLogin = () => {
     // Clear any previous errors

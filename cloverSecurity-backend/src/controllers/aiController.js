@@ -1,5 +1,20 @@
 const { Vulnerability, AIExplanation } = require('../../models');
-const geminiService = require('../services/geminiService');
+const aiService = require('../services/aiService');
+
+function buildUserSettings(req) {
+  const bodySettings = req.body?.settings || {};
+  const directBody = req.body || {};
+  const query = req.query || {};
+
+  return {
+    provider: bodySettings.provider || directBody.provider || query.provider,
+    model: bodySettings.model || directBody.model || query.model,
+    temperature:
+      bodySettings.temperature ?? directBody.temperature ?? query.temperature,
+    maxTokens:
+      bodySettings.maxTokens ?? directBody.maxTokens ?? query.maxTokens,
+  };
+}
 
 class AIController {
   // Generate AI explanation for vulnerability
@@ -8,7 +23,9 @@ class AIController {
       const { vulnerabilityId } = req.params;
 
       // Find vulnerability
-      const vulnerability = await Vulnerability.findByPk(vulnerabilityId);
+      const vulnerability = await Vulnerability.findByPk(vulnerabilityId, {
+        include: ['scan'],
+      });
 
       if (!vulnerability) {
         return res.status(404).json({ error: 'Vulnerability not found' });
@@ -23,32 +40,59 @@ class AIController {
         return res.json({
           message: 'Explanation retrieved from cache',
           explanation,
-          cached: true
+          cached: true,
+          usage: null,
         });
       }
 
       // Generate new explanation
-      const aiResponse = await geminiService.explainVulnerability(vulnerability);
+      const userSettings = buildUserSettings(req);
+      const aiResponse = await aiService.explainVulnerability({
+        vulnerability,
+        settings: userSettings,
+      });
+
+      const usage = aiResponse.usage || {
+        provider: 'unknown',
+        model: 'unknown',
+        tokens: { total: 0 },
+      };
+
+      const combinedExplanation = [
+        aiResponse.explanation && `Simple Explanation:\n${aiResponse.explanation}`,
+        aiResponse.impact && `Potential Impact:\n${aiResponse.impact}`,
+      ]
+        .filter(Boolean)
+        .join('\n\n')
+        .trim();
 
       // Save explanation
       explanation = await AIExplanation.create({
         vulnerabilityId,
-        explanation: aiResponse.explanation,
-        fixRecommendation: aiResponse.fixRecommendation,
-        additionalResources: aiResponse.additionalResources,
-        aiModel: aiResponse.aiModel,
-        tokensUsed: aiResponse.tokensUsed
+        explanation: combinedExplanation || aiResponse.raw,
+        fixRecommendation: aiResponse.remediation || '',
+        additionalResources: aiResponse.additionalResources || [],
+        aiModel: `${usage.provider}:${usage.model}`,
+        tokensUsed: usage.tokens?.total || 0,
       });
 
       return res.status(201).json({
         message: 'Explanation generated successfully',
         explanation,
-        cached: false
+        cached: false,
+        usage: usage,
       });
 
     } catch (error) {
       console.error('Explain Vulnerability Error:', error);
-      return res.status(500).json({ error: 'Failed to generate explanation' });
+      const status = error.statusCode || 500;
+      return res.status(status).json({
+        error:
+          status === 503
+            ? 'AI provider unavailable - please check configuration'
+            : 'Failed to generate explanation',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      });
     }
   }
 
@@ -90,50 +134,95 @@ class AIController {
         }))
       };
 
-      // Generate advice
-      const advice = await geminiService.getSecurityAdvice(scanResults);
+      const userSettings = buildUserSettings(req);
+      const result = await aiService.getSecurityAdvice({
+        scanSummary: scanResults,
+        settings: userSettings,
+      });
 
       return res.json({
         message: 'Security advice generated successfully',
-        advice,
-        scanId
+        advice: result.message.content,
+        usage: result.usage,
+        scanId,
       });
 
     } catch (error) {
       console.error('Get Security Advice Error:', error);
-      return res.status(500).json({ error: 'Failed to generate security advice' });
+      const status = error.statusCode || 500;
+      return res.status(status).json({
+        error: 'Failed to generate security advice',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      });
     }
   }
 
   // Chat with AI about security (custom query)
   async chatWithAI(req, res) {
     try {
-      const { question, context } = req.body;
+      const { messages, context } = req.body || {};
 
-      if (!question) {
-        return res.status(400).json({ error: 'Question is required' });
+      if (!Array.isArray(messages) || !messages.length) {
+        return res.status(400).json({ error: 'Messages array with at least one item is required' });
       }
 
-      // Build context-aware prompt
-      let prompt = question;
-      if (context) {
-        prompt = `Context: ${JSON.stringify(context)}\n\nQuestion: ${question}`;
-      }
-
-      const { model } = geminiService;
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const answer = response.text();
+      const userSettings = buildUserSettings(req);
+      const aiResponse = await aiService.chat({
+        messages,
+        context,
+        settings: userSettings,
+      });
 
       return res.json({
-        question,
-        answer
+        message: aiResponse.message,
+        usage: aiResponse.usage,
+        context: aiResponse.context,
       });
 
     } catch (error) {
       console.error('Chat with AI Error:', error);
-      return res.status(500).json({ error: 'Failed to process AI request' });
+      const status = error.statusCode || 500;
+  const provider = error.aiProvider;
+  const model = error.aiModel;
+  const normalizedModel = typeof model === 'string' ? model.replace(/^models\//, '') : model;
+      const rawMessage = error.message || '';
+
+      let clientMessage;
+      let hint;
+
+      if (status === 429) {
+        clientMessage = 'AI provider rate limit reached. Please wait a moment before retrying.';
+      } else if (status === 401 || status === 403) {
+        clientMessage = 'AI provider rejected the credentials. Verify the server API key and permissions.';
+      } else if (status === 502 && provider === 'gemini' && rawMessage.includes('not found')) {
+        clientMessage = 'Gemini could not find the configured model. Update GEMINI_MODEL or pick a supported model in Assistant Settings.';
+        hint = 'Example: models/gemini-1.5-flash-latest';
+      } else if (status === 503) {
+        clientMessage = 'AI provider unavailable - please check configuration';
+      } else if (status === 502) {
+        clientMessage = 'AI provider is unreachable. Confirm network access and model availability.';
+      }
+
+      if (!clientMessage) {
+        clientMessage = 'Failed to process AI request';
+      }
+
+      return res.status(status).json({
+        error: clientMessage,
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        meta: {
+          provider,
+          model: normalizedModel,
+          status,
+          hint,
+        },
+      });
     }
+  }
+
+  async getMeta(req, res) {
+    const meta = aiService.getMeta();
+    return res.json(meta);
   }
 }
 

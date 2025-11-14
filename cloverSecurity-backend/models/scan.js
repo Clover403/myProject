@@ -4,6 +4,11 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Scan extends Model {
     static associate(models) {
+      Scan.belongsTo(models.User, {
+        foreignKey: 'userId',
+        as: 'user'
+      });
+      
       Scan.belongsTo(models.Target, {
         foreignKey: 'targetId',
         as: 'target'
@@ -69,6 +74,8 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'Scan',
+    timestamps: true,
+    underscored: false
   });
   
   return Scan;

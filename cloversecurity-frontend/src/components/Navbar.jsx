@@ -108,7 +108,7 @@ function Navbar() {
             </button>
             {mobileMenuOpen && (
               <div
-                className={`absolute right-0 top-full mt-3 w-72 rounded-xl overflow-hidden ${menuPanelClasses}`}
+                className={`fixed right-4 top-16 w-72 rounded-xl overflow-hidden ${menuPanelClasses}`}
               >
                 {user && (
                   <div className={`flex items-center gap-3 px-4 py-3 border-b ${dividerClass}`}>

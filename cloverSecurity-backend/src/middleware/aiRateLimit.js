@@ -1,5 +1,5 @@
 const WINDOW_MS = parseInt(process.env.AI_RATE_WINDOW_MS || '60000', 10);
-const MAX_REQUESTS = parseInt(process.env.AI_RATE_MAX_REQUESTS || '6', 10);
+const MAX_REQUESTS = parseInt(process.env.AI_RATE_MAX_REQUESTS || '20', 10);
 
 const buckets = new Map();
 
@@ -18,7 +18,12 @@ module.exports = function aiRateLimit(req, res, next) {
 
     res.set('Retry-After', Math.ceil(retryAfterMs / 1000));
     return res.status(429).json({
-      error: 'Too many AI requests. Please wait a moment before trying again.',
+      error: `Too many AI requests. Please wait ${Math.ceil(retryAfterMs / 1000)} seconds before trying again.`,
+      meta: {
+        limit: MAX_REQUESTS,
+        windowMs: WINDOW_MS,
+        retryAfterMs,
+      },
     });
   }
 

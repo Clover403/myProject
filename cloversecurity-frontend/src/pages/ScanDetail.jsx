@@ -713,7 +713,7 @@ function ScanDetail() {
                         isDark ? "text-gray-100" : "text-gray-900"
                       }`}
                     >
-                      💬 Explanation
+                      Explanation
                     </h4>
                     <div
                       className={`rounded-lg p-4 whitespace-pre-wrap ${
@@ -734,7 +734,7 @@ function ScanDetail() {
                           isDark ? "text-gray-100" : "text-gray-900"
                         }`}
                       >
-                        🔧 How to Fix
+                        How to Fix ?
                       </h4>
                       <div
                         className={`rounded-lg p-4 whitespace-pre-wrap ${
@@ -757,7 +757,7 @@ function ScanDetail() {
                             isDark ? "text-gray-100" : "text-gray-900"
                           }`}
                         >
-                          📚 Learn More
+                          Learn More
                         </h4>
                         <ul
                           className={`rounded-lg p-4 space-y-2 ${

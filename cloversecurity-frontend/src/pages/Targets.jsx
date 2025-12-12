@@ -250,7 +250,7 @@ function Targets() {
                       state={{ targetId: target.id, url: target.url }}
                       className="block w-full text-center px-4 py-2.5 bg-[#3ecf8e] text-black rounded-lg hover:bg-[#52ffb2] transition font-semibold"
                     >
-                      ▶ Start Scan
+                       Start Scan
                     </Link>
                   </div>
                 </div>

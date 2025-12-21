@@ -25,7 +25,7 @@ export const authAPI = {
   getGoogleLoginUrl: () => `${API_BASE_URL}/auth/google`,
   
   // Token verification
-  verifyToken: (token) => 
+  verifyToken: (token) =>  
     api.post("/auth/verify-token", {}, {
       headers: { Authorization: `Bearer ${token}` }
     }),

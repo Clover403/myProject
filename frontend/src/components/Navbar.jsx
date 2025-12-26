@@ -78,9 +78,11 @@ function Navbar() {
             to="/dashboard"
             className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition"
           >
-            <div className="p-2 rounded-lg bg-[#3ecf8e]/10 border border-[#3ecf8e]/20">
-              <Shield className="w-5 h-5 text-[#3ecf8e]" />
-            </div>
+            <img 
+              src="/file_000000001d206246bd4f17ee6a946aa9.png" 
+              alt="CloverGuard Logo" 
+              className="w-8 h-8 object-contain rounded-full"
+            />
             <span className="text-xl font-semibold text-gray-100 tracking-tight">
               CloverSecurity
             </span>

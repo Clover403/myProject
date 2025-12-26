@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Shield, 
   ArrowRight, 
   ChevronRight,
   Scan,
@@ -44,9 +43,11 @@ const LandingPage = () => {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2.5">
-              <div className="p-1.5 rounded-md bg-[#3ecf8e]">
-                <Shield className="w-5 h-5 text-[#090b0e]" />
-              </div>
+              <img 
+                src="/file_000000001d206246bd4f17ee6a946aa9.png" 
+                alt="CloverGuard Logo" 
+                className="w-8 h-8 object-contain rounded-full"
+              />
               <span className="text-lg font-semibold text-white tracking-tight">CloverGuard</span>
             </Link>
             
@@ -500,9 +501,11 @@ const LandingPage = () => {
             {/* Logo Column */}
             <div className="col-span-2 md:col-span-1">
               <Link to="/" className="flex items-center gap-2 mb-4">
-                <div className="p-1.5 rounded-md bg-[#3ecf8e]">
-                  <Shield className="w-4 h-4 text-[#090b0e]" />
-                </div>
+                <img 
+                  src="/file_000000001d206246bd4f17ee6a946aa9.png" 
+                  alt="CloverGuard Logo" 
+                  className="w-7 h-7 object-contain rounded-full"
+                />
                 <span className="text-white font-semibold">CloverGuard</span>
               </Link>
               <div className="flex items-center gap-3 mt-4">

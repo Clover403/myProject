@@ -16,6 +16,7 @@ import Login from "./pages/Login";
 import AuthCallback from "./pages/AuthCallback";
 import AIChat from "./pages/AIChat";
 import OwaspTop10 from "./pages/OwaspTop10";
+import LandingPage from "./pages/LandingPage";
 
 // Protected Route Component
 function ProtectedRoute({ element }) {
@@ -73,12 +74,13 @@ function App() {
     <Router>
       <Routes>
         {/* Public Routes */}
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
 
         {/* Protected Routes */}
         <Route
-          path="/"
+          path="/dashboard"
           element={<ProtectedRoute element={<Dashboard />} />}
         />
         <Route
@@ -106,7 +108,7 @@ function App() {
           element={<ProtectedRoute element={<OwaspTop10 />} />}
         />
 
-        {/* Redirect unknown routes */}
+        {/* Redirect unknown routes */}"/"
         <Route path="*" element={<Navigate to={isAuthenticated ? "/" : "/login"} replace />} />
       </Routes>
     </Router>

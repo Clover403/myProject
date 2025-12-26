@@ -117,7 +117,7 @@ function Targets() {
           {/* Header */}
           <div className="mb-8">
             <Link
-              to="/"
+              to="/dashboard"
               className={`flex items-center gap-2 mb-4 ${isDark ? "text-gray-400 hover:text-gray-200" : "text-gray-600 hover:text-gray-900"}`}
             >
               <ArrowLeft className="w-4 h-4" />

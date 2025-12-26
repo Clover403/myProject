@@ -57,7 +57,7 @@ function AuthCallback() {
           
           // Give a small delay to ensure state is updated
           setTimeout(() => {
-            navigate('/', { replace: true });
+            navigate('/dashboard', { replace: true });
           }, 100);
         } else {
           throw new Error('Token verification failed');

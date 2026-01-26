@@ -6,7 +6,7 @@ import { Shield, ArrowRight, CheckCircle, AlertCircle, Mail, Lock, User, Loader 
 function Login() {
   const { isDark } = useTheme();
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+  // const navigate = useNavigate(); // For future use
   
   const [error, setError] = useState('');
   const [isLoginView, setIsLoginView] = useState(true);
@@ -20,16 +20,21 @@ function Login() {
   useEffect(() => {
     const errorParam = searchParams.get('error');
     if (errorParam) {
+      console.log('⚠️ Error from URL parameter:', errorParam);
       const errorMessages = {
         auth_failed: 'Authentication failed. Please try again.',
         no_user: 'Unable to authenticate user. Please try again.',
         server_error: 'Server error occurred. Please try again later.'
       };
-      setError(errorMessages[errorParam] || 'Authentication failed');
+      setError(errorMessages[errorParam] || decodeURIComponent(errorParam));
     }
   }, [searchParams]);
 
   const handleInputChange = (e) => {
+    // Clear error when user starts typing
+    if (error) {
+      setError('');
+    }
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
@@ -51,6 +56,9 @@ function Login() {
       const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
       const endpoint = isLoginView ? '/auth/login' : '/auth/register';
       
+      console.log('🔑 Attempting login to:', `${backendUrl}${endpoint}`);
+      console.log('📧 Email:', formData.email);
+      
       const response = await fetch(`${backendUrl}${endpoint}`, {
         method: 'POST',
         headers: {
@@ -59,24 +67,30 @@ function Login() {
         body: JSON.stringify(formData)
       });
 
+      console.log('📥 Response status:', response.status);
       const data = await response.json();
+      console.log('📥 Response data:', data);
 
       if (!response.ok) {
+        console.error('❌ Login failed:', data.error);
         throw new Error(data.error || 'Authentication failed');
       }
 
       // Handle successful login/register
-      if (data.token) {
+      if (data.token && data.success) {
+        console.log('✅ Login successful, redirecting to callback...');
+        console.log('👤 User role:', data.user?.role);
         // Store token and redirect
-        // Assuming AuthContext handles token storage via URL param or we do it manually here for now
-        // But for consistency with OAuth flow, we might want to redirect to a callback handler or just navigate
-        // Let's manually trigger the auth success flow
+        // Don't set isLoading to false since we're navigating away
         window.location.href = `/auth/callback?token=${data.token}`;
+      } else {
+        console.error('❌ No token in response:', data);
+        throw new Error('No token received from server');
       }
 
     } catch (err) {
+      console.error('❌ Login error:', err);
       setError(err.message);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -198,7 +212,7 @@ function Login() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-green-500/20 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-green-500/20 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <Loader className="w-5 h-5 animate-spin" />
@@ -214,7 +228,11 @@ function Login() {
             <div className="text-center mb-6">
               <button
                 type="button"
-                onClick={() => setIsLoginView(!isLoginView)}
+                onClick={() => {
+                  setIsLoginView(!isLoginView);
+                  setError(''); // Clear error when switching
+                  setFormData({ name: '', email: '', password: '' }); // Clear form
+                }}
                 className="text-sm text-green-500 hover:text-green-400 font-medium"
               >
                 {isLoginView ? "Don't have an account? Sign up" : "Already have an account? Sign in"}

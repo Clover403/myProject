@@ -16,7 +16,9 @@ export const verifyToken = createAsyncThunk(
           headers: { Authorization: `Bearer ${token}` }
         }
       );
+      console.log('✅ Token verified, FULL response:', response.data);
       console.log('✅ Token verified, user:', response.data.user);
+      console.log('✅ Token verified, user.role:', response.data.user?.role);
       return response.data.user;
     } catch (error) {
       console.error('❌ Token verification failed:', error.response?.data || error.message);
@@ -50,13 +52,14 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     setUser: (state, action) => {
-      console.log('📝 Setting user:', action.payload);
+      console.log('📝 [authSlice] setUser called with:', action.payload);
+      console.log('📝 [authSlice] User role:', action.payload?.role);
       state.user = action.payload;
       state.isAuthenticated = true;
       state.error = null;
     },
     setToken: (state, action) => {
-      console.log('🔑 Setting token:', action.payload ? 'Yes' : 'No');
+      console.log('🔑 [authSlice] setToken called:', action.payload ? 'Token exists' : 'Token null');
       state.token = action.payload;
       if (action.payload) {
         localStorage.setItem('authToken', action.payload);
@@ -87,11 +90,14 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(verifyToken.fulfilled, (state, action) => {
-        console.log('✅ Token verified successfully');
+        console.log('✅ [authSlice] Token verified successfully');
+        console.log('👤 [authSlice] User data received:', action.payload);
+        console.log('🎭 [authSlice] User role:', action.payload?.role);
         state.loading = false;
         state.user = action.payload;
         state.isAuthenticated = true;
         state.error = null;
+        console.log('📊 [authSlice] Final state - isAuthenticated:', state.isAuthenticated, 'role:', state.user?.role);
       })
       .addCase(verifyToken.rejected, (state, action) => {
         console.log('❌ Token verification rejected:', action.payload);

@@ -26,15 +26,13 @@ function AuthCallback() {
 
       if (error) {
         console.error('❌ OAuth error:', error);
-        alert('Authentication failed. Please try again.');
-        navigate('/login', { replace: true });
+        navigate('/login?error=' + encodeURIComponent(error), { replace: true });
         return;
       }
 
       if (!token) {
         console.error('❌ No token received');
-        alert('Authentication failed. No token received.');
-        navigate('/login', { replace: true });
+        navigate('/login?error=' + encodeURIComponent('No token received'), { replace: true });
         return;
       }
 
@@ -64,9 +62,10 @@ function AuthCallback() {
         }
       } catch (error) {
         console.error('❌ Error processing authentication:', error);
+        console.error('❌ Error details:', error.message, error.stack);
         localStorage.removeItem('authToken');
-        alert('Authentication failed. Please try again.');
-        navigate('/login', { replace: true });
+        const errorMsg = error.message || 'Authentication failed';
+        navigate('/login?error=' + encodeURIComponent(errorMsg), { replace: true });
       }
     };
 

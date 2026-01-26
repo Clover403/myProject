@@ -2,7 +2,7 @@ import React,{ useState, useEffect } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import { targetAPI } from "../services/api";
 import { useTheme } from '../context/ThemeContext';
-import Navbar from "../components/Navbar";
+import Layout from "../components/Layout";
 import { ArrowLeft, Plus, Edit2, Trash2, ExternalLink, Globe, Tag, FileText } from "lucide-react";
 
 function Targets() {
@@ -100,24 +100,25 @@ function Targets() {
 
   if (loading) {
     return (
-      <div className={`min-h-screen ${isDark ? "bg-[#0f1117]" : "bg-gray-50"}`}>
-        <Navbar />
-        <div className="flex items-center justify-center h-96">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3ecf8e]"></div>
+      <Layout>
+        <div className={`min-h-screen ${isDark ? "bg-[#0f1117]" : "bg-gray-50"}`}>
+          <div className="flex items-center justify-center h-96">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700"></div>
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   return (
-    <div className={`min-h-screen ${isDark ? "bg-[#0f1117]" : "bg-gray-50"}`}>
-      <Navbar />
-      <div className="p-6">
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="mb-8">
-            <Link
-              to="/dashboard"
+    <Layout>
+      <div className={`min-h-screen ${isDark ? "bg-[#0f1117]" : "bg-gray-50"}`}>
+        <div className="p-6">
+          <div className="max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="mb-8">
+              <Link
+                to="/dashboard"
               className={`flex items-center gap-2 mb-4 ${isDark ? "text-gray-400 hover:text-gray-200" : "text-gray-600 hover:text-gray-900"}`}
             >
               <ArrowLeft className="w-4 h-4" />
@@ -136,7 +137,7 @@ function Targets() {
 
               <button
                 onClick={handleNewTarget}
-                className="px-4 py-2 bg-[#3ecf8e] text-black rounded-lg hover:bg-[#52ffb2] flex items-center gap-2 font-medium transition-colors"
+                className="px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-600 flex items-center gap-2 font-medium transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Add Target
@@ -147,7 +148,7 @@ function Targets() {
           {/* Targets Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {targets.length === 0 ? (
-              <div className={`col-span-full rounded-xl p-12 text-center border-2 border-dashed ${isDark ? "bg-[#1a1d24] border-[#3ecf8e]/20 text-gray-300" : "bg-white border-gray-300 text-gray-600"}`}>
+              <div className={`col-span-full rounded-xl p-12 text-center border-2 border-dashed ${isDark ? "bg-[#1a1d24] border-green-700/20 text-gray-300" : "bg-white border-gray-300 text-gray-600"}`}>
                 <div className="text-6xl mb-4">🎯</div>
                 <h3 className={`text-2xl font-bold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
                   No targets yet
@@ -157,7 +158,7 @@ function Targets() {
                 </p>
                 <button
                   onClick={handleNewTarget}
-                  className="px-6 py-3 bg-[#3ecf8e] text-black rounded-lg hover:bg-[#52ffb2] font-semibold transition-all inline-flex items-center gap-2"
+                  className="px-6 py-3 bg-green-700 text-white rounded-lg hover:bg-green-600 font-semibold transition-all inline-flex items-center gap-2"
                 >
                   <Plus className="w-5 h-5" />
                   Add Your First Target
@@ -167,10 +168,10 @@ function Targets() {
               targets.map((target) => (
                 <div
                   key={target.id}
-                  className={`rounded-xl border transition-all hover:shadow-lg overflow-hidden group ${isDark ? "bg-[#1a1d24] border-[#2a2e38] hover:border-[#3ecf8e]/40" : "bg-white border-gray-200 hover:border-[#3ecf8e]"}`}
+                  className={`rounded-xl border transition-all hover:shadow-lg overflow-hidden group ${isDark ? "bg-[#1a1d24] border-[#2a2e38] hover:border-green-700/40" : "bg-white border-gray-200 hover:border-green-700"}`}
                 >
                   {/* Header dengan gradient subtle */}
-                  <div className={`h-1 bg-gradient-to-r from-[#3ecf8e] to-[#2aa866]`}></div>
+                  <div className={`h-1 bg-gradient-to-r from-green-700 to-[#2aa866]`}></div>
                   
                   <div className="p-6">
                     {/* Title dan Actions */}
@@ -184,7 +185,7 @@ function Targets() {
                           href={target.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`text-sm flex items-center gap-2 hover:opacity-70 transition ${isDark ? "text-[#3ecf8e]" : "text-[#3ecf8e]"}`}
+                          className={`text-sm flex items-center gap-2 hover:opacity-70 transition ${isDark ? "text-green-700" : "text-green-700"}`}
                         >
                           <Globe className="w-4 h-4" />
                           {target.url}
@@ -195,7 +196,7 @@ function Targets() {
                       <div className={`flex gap-2 p-2 rounded-lg transition ${isDark ? "bg-[#0f1117]/50 group-hover:bg-[#0f1117]" : "bg-gray-50 group-hover:bg-gray-100"}`}>
                         <button
                           onClick={() => handleEdit(target)}
-                          className={`p-2 rounded transition ${isDark ? "text-gray-400 hover:text-[#3ecf8e] hover:bg-[#2a2e38]" : "text-gray-600 hover:text-[#3ecf8e] hover:bg-gray-200"}`}
+                          className={`p-2 rounded transition ${isDark ? "text-gray-400 hover:text-green-700 hover:bg-[#2a2e38]" : "text-gray-600 hover:text-green-700 hover:bg-gray-200"}`}
                           title="Edit target"
                         >
                           <Edit2 className="w-4 h-4" />
@@ -223,7 +224,7 @@ function Targets() {
                         {target.tags.map((tag, index) => (
                           <span
                             key={index}
-                            className={`px-3 py-1 text-xs font-medium rounded-full flex items-center gap-1 ${isDark ? "bg-[#3ecf8e]/10 text-[#3ecf8e] border border-[#3ecf8e]/20" : "bg-[#3ecf8e]/10 text-[#2aa866] border border-[#3ecf8e]/30"}`}
+                            className={`px-3 py-1 text-xs font-medium rounded-full flex items-center gap-1 ${isDark ? "bg-green-700/10 text-green-700 border border-green-700/20" : "bg-green-700/10 text-[#2aa866] border border-green-700/30"}`}
                           >
                             <Tag className="w-3 h-3" />
                             {tag}
@@ -248,7 +249,7 @@ function Targets() {
                     <Link
                       to="/scan/new"
                       state={{ targetId: target.id, url: target.url }}
-                      className="block w-full text-center px-4 py-2.5 bg-[#3ecf8e] text-black rounded-lg hover:bg-[#52ffb2] transition font-semibold"
+                      className="block w-full text-center px-4 py-2.5 bg-green-700 text-white rounded-lg hover:bg-green-600 transition font-semibold"
                     >
                        Start Scan
                     </Link>
@@ -267,7 +268,7 @@ function Targets() {
             {/* Header */}
             <div className={`p-6 border-b ${isDark ? "border-[#2a2e38] bg-[#0f1117]/50" : "border-gray-200 bg-gray-50"}`}>
               <h2 className={`text-2xl font-bold flex items-center gap-3 ${isDark ? "text-white" : "text-gray-900"}`}>
-                <Globe className="w-6 h-6 text-[#3ecf8e]" />
+                <Globe className="w-6 h-6 text-green-700" />
                 {editingTarget ? "Edit Target" : "Add New Target"}
               </h2>
               <p className={`text-sm mt-1 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
@@ -291,7 +292,7 @@ function Targets() {
                     }
                     placeholder="https://example.com"
                     required
-                    className={`w-full pl-10 pr-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition ${isDark ? "bg-[#0f1117] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
+                    className={`w-full pl-10 pr-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition ${isDark ? "bg-[#0f1117] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
                   />
                 </div>
                 <p className={`text-xs mt-1 ${isDark ? "text-gray-500" : "text-gray-600"}`}>
@@ -312,7 +313,7 @@ function Targets() {
                   }
                   placeholder="e.g., Production Website, Staging App"
                   required
-                  className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition ${isDark ? "bg-[#0f1117] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
+                  className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition ${isDark ? "bg-[#0f1117] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
                 />
                 <p className={`text-xs mt-1 ${isDark ? "text-gray-500" : "text-gray-600"}`}>
                   A friendly name to identify this target
@@ -331,7 +332,7 @@ function Targets() {
                   }
                   placeholder="e.g., Main payment processing system, backend API server"
                   rows="3"
-                  className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition resize-none ${isDark ? "bg-[#0f1117] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
+                  className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition resize-none ${isDark ? "bg-[#0f1117] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
                 />
                 <p className={`text-xs mt-1 ${isDark ? "text-gray-500" : "text-gray-600"}`}>
                   Add notes about this target for future reference
@@ -352,7 +353,7 @@ function Targets() {
                       setFormData({ ...formData, tags: e.target.value })
                     }
                     placeholder="e.g., production, critical, api, payment"
-                    className={`w-full pl-10 pr-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition ${isDark ? "bg-[#0f1117] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
+                    className={`w-full pl-10 pr-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition ${isDark ? "bg-[#0f1117] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
                   />
                 </div>
                 <p className={`text-xs mt-1 ${isDark ? "text-gray-500" : "text-gray-600"}`}>
@@ -374,7 +375,7 @@ function Targets() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-3 bg-[#3ecf8e] text-black rounded-lg hover:bg-[#52ffb2] font-semibold transition"
+                  className="flex-1 px-4 py-3 bg-green-700 text-white rounded-lg hover:bg-green-600 font-semibold transition"
                 >
                   {editingTarget ? "Update Target" : "Add Target"}
                 </button>
@@ -383,7 +384,8 @@ function Targets() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </Layout>
   );
 }
 

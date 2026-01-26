@@ -74,7 +74,15 @@ class TargetController {
   // READ - Get all targets
   async getAllTargets(req, res) {
     try {
+      const userId = req.user?.id;
+      const whereClause = {};
+
+      if (userId) {
+        whereClause.userId = userId;
+      }
+
       const targets = await Target.findAll({
+        where: whereClause,
         include: [
           {
             model: Scan,
@@ -115,8 +123,15 @@ class TargetController {
   async getTargetById(req, res) {
     try {
       const { id } = req.params;
+      const userId = req.user?.id;
 
-      const target = await Target.findByPk(id, {
+      const whereClause = { id };
+      if (userId) {
+        whereClause.userId = userId;
+      }
+
+      const target = await Target.findOne({
+        where: whereClause,
         include: [
           {
             model: Scan,
@@ -144,8 +159,14 @@ class TargetController {
     try {
       const { id } = req.params;
       const { name, description, tags, isActive } = req.body;
+      const userId = req.user?.id;
 
-      const target = await Target.findByPk(id);
+      const whereClause = { id };
+      if (userId) {
+        whereClause.userId = userId;
+      }
+
+      const target = await Target.findOne({ where: whereClause });
 
       if (!target) {
         return res.status(404).json({ error: 'Target not found' });
@@ -173,8 +194,14 @@ class TargetController {
   async deleteTarget(req, res) {
     try {
       const { id } = req.params;
+      const userId = req.user?.id;
 
-      const target = await Target.findByPk(id);
+      const whereClause = { id };
+      if (userId) {
+        whereClause.userId = userId;
+      }
+
+      const target = await Target.findOne({ where: whereClause });
 
       if (!target) {
         return res.status(404).json({ error: 'Target not found' });

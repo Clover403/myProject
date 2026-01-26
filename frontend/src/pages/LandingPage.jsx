@@ -53,8 +53,9 @@ const LandingPage = () => {
             
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-1">
-              <a href="#features" className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">Products</a>
-              <a href="#services" className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">Services</a>
+              <a href="#features" className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">Features</a>
+              <Link to="/products" className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">Services</Link>
+              <Link to="/ethical-hackers" className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">Ethical Hackers</Link>
               <a href="#learning" className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">Learning</a>
             </div>
 
@@ -99,10 +100,10 @@ const LandingPage = () => {
         {mobileMenuOpen && (
           <div className="md:hidden bg-[#0d0f14] border-t border-[#1c1f26]">
             <div className="px-4 py-4 space-y-2">
-              <a href="#features" className="block px-4 py-2 text-sm text-gray-400 hover:text-white">Products</a>
-              <a href="#services" className="block px-4 py-2 text-sm text-gray-400 hover:text-white">Services</a>
+              <a href="#features" className="block px-4 py-2 text-sm text-gray-400 hover:text-white">Features</a>
+              <Link to="/products" className="block px-4 py-2 text-sm text-gray-400 hover:text-white">Services</Link>
+              <Link to="/ethical-hackers" className="block px-4 py-2 text-sm text-gray-400 hover:text-white">Ethical Hackers</Link>
               <a href="#learning" className="block px-4 py-2 text-sm text-gray-400 hover:text-white">Learning</a>
-              <a href="#pricing" className="block px-4 py-2 text-sm text-gray-400 hover:text-white">Pricing</a>
               <div className="pt-4 border-t border-[#1c1f26]">
                 <Link to="/login" className="block w-full px-4 py-2 text-center rounded-md bg-[#3ecf8e] text-[#090b0e] text-sm font-medium">
                   Start your project
@@ -230,7 +231,7 @@ const LandingPage = () => {
             {/* Cyber Team Card */}
             <div className="rounded-lg bg-[#0d0f14] border border-[#1c1f26] p-6 hover:border-[#3ecf8e]/30 transition-all">
               <div className="flex items-center gap-3 mb-4">
-                <Users className="w-5 h-5 text-emerald-400" />
+                <Users className="w-5 h-5 text-blue-400" />
                 <h3 className="text-white font-medium">Cyber Security Team</h3>
               </div>
               <p className="text-gray-500 text-sm mb-4">
@@ -241,8 +242,8 @@ const LandingPage = () => {
               <div className="flex items-center gap-2 mb-4">
                 <div className="flex -space-x-2">
                   {[...Array(4)].map((_, i) => (
-                    <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-[#3ecf8e]/30 to-[#3ecf8e]/10 border-2 border-[#0d0f14] flex items-center justify-center">
-                      <span className="text-xs text-[#3ecf8e]">{['A', 'B', 'C', 'D'][i]}</span>
+                    <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400/30 to-blue-400/10 border-2 border-[#0d0f14] flex items-center justify-center">
+                      <span className="text-xs text-blue-400">{['A', 'B', 'C', 'D'][i]}</span>
                     </div>
                   ))}
                 </div>
@@ -267,7 +268,7 @@ const LandingPage = () => {
                   <span className="text-xs text-gray-400">OWASP Fundamentals</span>
                 </div>
                 <div className="flex items-center gap-2 p-2 rounded bg-[#090b0e] border border-[#1c1f26]">
-                  <Code className="w-4 h-4 text-blue-400" />
+                  <Code className="w-4 h-4 text-purple-400" />
                   <span className="text-xs text-gray-400">Secure Coding Practices</span>
                 </div>
               </div>
@@ -316,7 +317,7 @@ const LandingPage = () => {
             {/* Reports & Analytics */}
             <div className="rounded-lg bg-[#0d0f14] border border-[#1c1f26] p-6 hover:border-[#3ecf8e]/30 transition-all">
               <div className="flex items-center gap-3 mb-4">
-                <FileSearch className="w-5 h-5 text-cyan-400" />
+                <FileSearch className="w-5 h-5 text-emerald-400" />
                 <h3 className="text-white font-medium">Reports & Analytics</h3>
               </div>
               <p className="text-gray-500 text-sm mb-4">
@@ -372,8 +373,8 @@ const LandingPage = () => {
 
             {/* Service 2 */}
             <div className="text-center p-8">
-              <div className="w-16 h-16 mx-auto mb-6 rounded-xl bg-emerald-400/10 flex items-center justify-center">
-                <Users className="w-8 h-8 text-emerald-400" />
+              <div className="w-16 h-16 mx-auto mb-6 rounded-xl bg-blue-400/10 flex items-center justify-center">
+                <Users className="w-8 h-8 text-blue-400" />
               </div>
               <h3 className="text-xl font-medium text-white mb-3">Expert Team Access</h3>
               <p className="text-gray-500 text-sm leading-relaxed">

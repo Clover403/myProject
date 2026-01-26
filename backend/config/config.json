@@ -1,21 +1,33 @@
 {
   "development": {
-    "username": "postgres",
-    "password": "postgres",
-    "database": "Clover_security",
-    "host": "127.0.0.1",
-    "dialect": "postgres"
+    "url": "postgres://postgres.lntelebxzbkmuzccrrku:Clover%2A403@aws-1-ap-south-1.pooler.supabase.com:6543/postgres",
+    "dialect": "postgres",
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    }
   },
   "test": {
-    "username": "postgres",
-    "password": "postgres",
-    "database": "Clover_security_test",
-    "host": "127.0.0.1",
-    "port": 5432,
+    "url": "postgres://postgres.lntelebxzbkmuzccrrku:Clover%2A403@aws-1-ap-south-1.pooler.supabase.com:6543/postgres",
     "dialect": "postgres",
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    },
     "logging": false
   },
   "production": {
-    "use_env_variable": "postgresql://postgres.lntelebxzbkmuzccrrku:@aws-1-ap-south-1.pooler.supabase.com:6543/postgres"
+    "url": "postgres://postgres.lntelebxzbkmuzccrrku:Clover%2A403@aws-1-ap-south-1.pooler.supabase.com:6543/postgres",
+    "dialect": "postgres",
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    }
   }
 }

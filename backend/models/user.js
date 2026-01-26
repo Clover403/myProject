@@ -12,6 +12,33 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'userId',
         as: 'targets'
       });
+      User.hasMany(models.Product, {
+        foreignKey: 'ethackId',
+        as: 'products'
+      });
+      // Order associations
+      User.hasMany(models.Order, {
+        foreignKey: 'buyerId',
+        as: 'purchases'
+      });
+      User.hasMany(models.Order, {
+        foreignKey: 'sellerId',
+        as: 'sales'
+      });
+      // Conversation associations
+      User.hasMany(models.Conversation, {
+        foreignKey: 'participant1Id',
+        as: 'conversationsAsParticipant1'
+      });
+      User.hasMany(models.Conversation, {
+        foreignKey: 'participant2Id',
+        as: 'conversationsAsParticipant2'
+      });
+      // Message associations
+      User.hasMany(models.Message, {
+        foreignKey: 'senderId',
+        as: 'sentMessages'
+      });
     }
   }
   
@@ -51,6 +78,19 @@ module.exports = (sequelize, DataTypes) => {
     },
     lastLogin: {
       type: DataTypes.DATE,
+      allowNull: true
+    },
+    role: {
+      type: DataTypes.ENUM('user', 'ethack', 'admin'),
+      defaultValue: 'user',
+      allowNull: false
+    },
+    isOnJob: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    currentOrderId: {
+      type: DataTypes.INTEGER,
       allowNull: true
     }
   }, {

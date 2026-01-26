@@ -19,13 +19,13 @@ const scanRoutes = require('./routes/scan.routes');
 const targetRoutes = require('./routes/target.routes');
 const aiRoutes = require('./routes/ai.routes');
 const authRoutes = require('./routes/auth.routes');
+const productRoutes = require('./routes/product.routes');
+const userRoutes = require('./routes/user.routes');
+const orderRoutes = require('./routes/order.routes');
+const chatRoutes = require('./routes/chat.routes');
 
 const app = express();
 
-app.use((req, res, next) => {
-  console.log('🧭 Request masuk:', req.method, req.url);
-  next();
-});
 // CORS Configuration - VERY PERMISSIVE FOR DEBUGGING
 app.use(cors({
   origin: function(origin, callback) {
@@ -115,6 +115,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/scans', scanRoutes);
 app.use('/api/targets', targetRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/chat', chatRoutes);
 
 // 404 handler
 app.use((req, res) => {

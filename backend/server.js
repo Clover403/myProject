@@ -1,5 +1,7 @@
+const http = require('http');
 const app = require('./src/app');
 const db = require('./models');
+const { initializeSocket } = require('./src/config/socket');
 
 const PORT = process.env.PORT || 5000;
 
@@ -16,8 +18,15 @@ const startServer = async () => {
     console.log('✅ Database connected successfully');
 
     console.log('🔄 Starting the server...');
-    // 2. HANYA JIKA database sukses, jalankan server
-    app.listen(PORT, () => {
+    // 2. Create HTTP server
+    const server = http.createServer(app);
+    
+    // 3. Initialize Socket.io
+    const io = initializeSocket(server);
+    console.log('✅ Socket.io initialized');
+
+    // 4. Start the server
+    server.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
       console.log(` API endpoints:`);
       console.log(`   - GET  /health`);
@@ -25,6 +34,9 @@ const startServer = async () => {
       console.log(`   - GET  /api/scans`);
       console.log(`   - POST /api/targets`);
       console.log(`   - POST /api/ai/explain/:vulnerabilityId`);
+      console.log(`   - GET  /api/orders`);
+      console.log(`   - GET  /api/chat/conversations`);
+      console.log(` Socket.io: ws://localhost:${PORT}`);
     });
 
   } catch (error) {

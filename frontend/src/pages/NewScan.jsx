@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { scanAPI } from '../services/api';
+import Layout from '../components/Layout';
 import { useTheme } from '../context/ThemeContext';
 import { Shield, ArrowLeft } from 'lucide-react';
 
@@ -60,6 +61,7 @@ function NewScan() {
   };
 
   return (
+    <Layout>
     <div className={`min-h-screen p-6 ${isDark ? "bg-[#0f1117]" : "bg-gray-50"}`}>
       <div className="max-w-3xl mx-auto">
         {/* Header */}
@@ -191,6 +193,7 @@ function NewScan() {
         </div>
       </div>
     </div>
+    </Layout>
   );
 }
 

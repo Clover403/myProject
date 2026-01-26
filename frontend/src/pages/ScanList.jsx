@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { scanAPI } from '../services/api';
 import { useTheme } from '../context/ThemeContext';
 import { ArrowLeft, Trash2, Search, AlertOctagon, AlertTriangle, ShieldCheck } from 'lucide-react';
-import Navbar from '../components/Navbar';
+import Layout from '../components/Layout';
 
 function ScanList() {
   const { isDark } = useTheme();
@@ -68,15 +68,16 @@ function ScanList() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <Layout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </Layout>
     );
   }
 
   return (
-    <>
-      <Navbar />
+    <Layout>
       <div className={`min-h-screen p-6 ${isDark ? "bg-[#0f1117]" : "bg-gray-50"}`}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -204,7 +205,7 @@ function ScanList() {
         </div>
       </div>
     </div>
-    </>
+    </Layout>
   );
 }
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { scanAPI, aiAPI } from "../services/api";
+import Layout from "../components/Layout";
 import { useTheme } from "../context/ThemeContext";
 import {
   ArrowLeft,
@@ -232,6 +233,7 @@ function ScanDetail() {
   }
 
   return (
+    <Layout>
     <div
       className={`min-h-screen p-6 ${isDark ? "bg-[#0f1117]" : "bg-gray-50"}`}
     >
@@ -814,6 +816,7 @@ function ScanDetail() {
         </div>
       )}
     </div>
+    </Layout>
   );
 }
 

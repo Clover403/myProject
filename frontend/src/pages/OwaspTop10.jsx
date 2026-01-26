@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import Layout from '../components/Layout';
 import { useTheme } from '../context/ThemeContext';
 import {
   Shield,
@@ -415,20 +414,19 @@ function OwaspTop10() {
   };
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-[#0f1117]' : 'bg-gray-50'}`}>
-      <Navbar />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className={`rounded-xl p-8 mb-8 border ${isDark ? 'bg-[#1a1d24] border-[#2a2e38]' : 'bg-white border-gray-200'}`}>
-          <div className="flex items-center gap-4 mb-4">
-            <div className="p-3 rounded-xl bg-gradient-primary">
-              <Shield className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                OWASP Top 10 Web Application Security Risks
-              </h1>
+    <Layout>
+      <div className={`min-h-screen ${isDark ? 'bg-[#0f1117]' : 'bg-gray-50'}`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header */}
+          <div className={`rounded-xl p-8 mb-8 border ${isDark ? 'bg-[#1a1d24] border-[#2a2e38]' : 'bg-white border-gray-200'}`}>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-3 rounded-xl bg-gradient-primary">
+                <Shield className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  OWASP Top 10 Web Application Security Risks
+                </h1>
               <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 Standard awareness document for developers and web application security
               </p>
@@ -735,9 +733,8 @@ function OwaspTop10() {
           </div>
         )}
       </div>
-
-      <Footer />
     </div>
+    </Layout>
   );
 }
 

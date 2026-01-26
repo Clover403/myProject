@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { verifyToken } from "../redux/authSlice";
 import { scanAPI, targetAPI } from "../services/api";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
+import Layout from "../components/Layout";
 import { useTheme } from "../context/ThemeContext";
 import {
   Shield,
@@ -15,12 +16,20 @@ import {
   Plus,
   Globe,
   AlertCircle,
+  RefreshCw,
+  UserCircle,
+  Crown,
+  UserCheck,
+  User as UserIcon,
 } from "lucide-react";
 
 function Dashboard() {
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
   const [stats, setStats] = useState(null);
   const [recentScans, setRecentScans] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshingUser, setRefreshingUser] = useState(false);
   const [showAddTargetModal, setShowAddTargetModal] = useState(false);
   const [targetFormData, setTargetFormData] = useState({
     url: "",
@@ -35,6 +44,46 @@ function Dashboard() {
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  const handleRefreshUserData = async () => {
+    setRefreshingUser(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        console.log('🔄 Refreshing user data...');
+        await dispatch(verifyToken(token)).unwrap();
+        console.log('✅ User data refreshed successfully');
+      }
+    } catch (error) {
+      console.error('❌ Failed to refresh user data:', error);
+    } finally {
+      setRefreshingUser(false);
+    }
+  };
+
+  const getRoleInfo = (role) => {
+    const roleData = {
+      admin: {
+        label: "Administrator",
+        icon: Crown,
+        badge: "bg-purple-500/20 text-purple-400 border-purple-500/30",
+        desc: "Full system access with management privileges"
+      },
+      ethack: {
+        label: "Ethical Hacker",
+        icon: UserCheck,
+        badge: "bg-green-500/20 text-green-400 border-green-500/30",
+        desc: "Security professional with seller capabilities"
+      },
+      user: {
+        label: "User",
+        icon: UserIcon,
+        badge: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+        desc: "Standard user with basic access"
+      }
+    };
+    return roleData[role] || roleData.user;
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -120,26 +169,26 @@ function Dashboard() {
 
   if (loading) {
     return (
+      <Layout>
       <div className={`min-h-screen ${isDark ? "bg-[#0f1117]" : "bg-white"}`}>
-        <Navbar />
         <div className="flex items-center justify-center h-96">
           <div className="spinner spinner-lg"></div>
         </div>
       </div>
+      </Layout>
     );
   }
 
   return (
+    <Layout>
     <div className={`min-h-screen flex flex-col ${isDark ? "bg-[#0f1117] text-gray-200" : "bg-white text-gray-900"}`}>
-      <Navbar />
-
       <main className="flex-1">
         {/* Header */}
         <div className={`border-b py-8 ${isDark ? "border-[#1a1d24] bg-[#111318]" : "border-gray-200 bg-gray-50"}`}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col items-center justify-center gap-3">
-              <div className={`p-3 rounded-lg ${isDark ? "bg-[#3ecf8e]/10" : "bg-green-100"}`}>
-                <Activity className="w-6 h-6 text-[#3ecf8e]" />
+              <div className={`p-3 rounded-lg ${isDark ? "bg-green-700/10" : "bg-green-100"}`}>
+                <Activity className="w-6 h-6 text-green-700" />
               </div>
               <h1 className={`text-3xl font-semibold tracking-tight ${isDark ? "text-white" : "text-gray-900"}`}>
                 Dashboard
@@ -178,7 +227,7 @@ function Dashboard() {
               ].map(({ title, value, icon: Icon }, i) => (
                 <div
                   key={i}
-                  className={`border rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 ${isDark ? "bg-[#1a1d24] border-[#2a2e38] hover:border-[#3ecf8e]/30" : "bg-gray-50 border-gray-200 hover:border-green-400"}`}
+                  className={`border rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 ${isDark ? "bg-[#1a1d24] border-[#2a2e38] hover:border-green-700/30" : "bg-gray-50 border-gray-200 hover:border-green-400"}`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -189,8 +238,8 @@ function Dashboard() {
                         {value}
                       </p>
                     </div>
-                    <div className={`p-3 rounded-lg ${isDark ? "bg-[#3ecf8e]/10" : "bg-green-100"}`}>
-                      <Icon className="w-5 h-5 text-[#3ecf8e]" />
+                    <div className={`p-3 rounded-lg ${isDark ? "bg-green-700/10" : "bg-green-100"}`}>
+                      <Icon className="w-5 h-5 text-green-700" />
                     </div>
                   </div>
                 </div>
@@ -201,7 +250,7 @@ function Dashboard() {
             <div className={`border rounded-xl shadow-lg overflow-hidden ${isDark ? "bg-[#1a1d24] border-[#2a2e38]" : "bg-gray-50 border-gray-200"}`}>
               <div className={`px-6 py-4 border-b ${isDark ? "border-[#2a2e38]" : "border-gray-200"}`}>
                 <h2 className={`text-xl font-semibold flex items-center gap-2 ${isDark ? "text-white" : "text-gray-900"}`}>
-                  <Plus className="w-5 h-5 text-[#3ecf8e]" />
+                  <Plus className="w-5 h-5 text-green-700" />
                   Quick Add Target
                 </h2>
                 <p className={`text-sm mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
@@ -223,7 +272,7 @@ function Dashboard() {
                         onChange={(e) => setTargetFormData({ ...targetFormData, url: e.target.value })}
                         placeholder="https://example.com"
                         required
-                        className={`w-full pl-9 pr-3 py-2.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition ${isDark ? "bg-[#1a1d24] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
+                        className={`w-full pl-9 pr-3 py-2.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition ${isDark ? "bg-[#1a1d24] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
                       />
                     </div>
                   </div>
@@ -238,7 +287,7 @@ function Dashboard() {
                       onChange={(e) => setTargetFormData({ ...targetFormData, name: e.target.value })}
                       placeholder="e.g., Production"
                       required
-                      className={`w-full px-3 py-2.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition ${isDark ? "bg-[#1a1d24] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
+                      className={`w-full px-3 py-2.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition ${isDark ? "bg-[#1a1d24] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
                     />
                   </div>
 
@@ -251,7 +300,7 @@ function Dashboard() {
                       value={targetFormData.tags}
                       onChange={(e) => setTargetFormData({ ...targetFormData, tags: e.target.value })}
                       placeholder="e.g., production"
-                      className={`w-full px-3 py-2.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition ${isDark ? "bg-[#1a1d24] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
+                      className={`w-full px-3 py-2.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition ${isDark ? "bg-[#1a1d24] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
                     />
                   </div>
 
@@ -259,7 +308,7 @@ function Dashboard() {
                     <button
                       type="submit"
                       disabled={addingTarget}
-                      className="flex-1 bg-[#3ecf8e] hover:bg-[#52ffb2] text-black font-semibold py-2.5 rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="flex-1 bg-green-700 hover:bg-green-800 text-white font-semibold py-2.5 rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       <Plus className="w-4 h-4" />
                       Add Target
@@ -297,7 +346,7 @@ function Dashboard() {
                 </div>
                 <Link
                   to="/scans"
-                  className="text-[#3ecf8e] hover:text-[#52ffb2] font-medium flex items-center gap-2 transition-colors"
+                  className="text-green-700 hover:text-green-800 font-medium flex items-center gap-2 transition-colors"
                 >
                   View All 
                   <TrendingUp className="w-4 h-4" />
@@ -378,7 +427,7 @@ function Dashboard() {
                           <td className="px-6 py-4">
                             <Link
                               to={`/scans/${scan.id}`}
-                              className="text-[#3ecf8e] hover:text-[#52ffb2] font-medium transition-colors"
+                              className="text-green-700 hover:text-green-800 font-medium transition-colors"
                             >
                               View Details →
                             </Link>
@@ -401,7 +450,7 @@ function Dashboard() {
                   </p>
                   <Link
                     to="/new-scan"
-                    className="inline-flex items-center gap-2 bg-[#3ecf8e] hover:bg-[#52ffb2] text-black font-semibold px-6 py-3 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
+                    className="inline-flex items-center gap-2 bg-green-700 hover:bg-green-800 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
                   >
                     <Zap className="w-4 h-4" />
                     Create New Scan
@@ -414,8 +463,6 @@ function Dashboard() {
         </section>
       </main>
 
-      <Footer />
-
       {/* Add Target Modal (Detailed Form) */}
       {showAddTargetModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -423,7 +470,7 @@ function Dashboard() {
             {/* Header */}
             <div className={`p-6 border-b ${isDark ? "border-[#2a2e38] bg-[#0f1117]/50" : "border-gray-200 bg-gray-50"}`}>
               <h2 className={`text-2xl font-bold flex items-center gap-3 ${isDark ? "text-white" : "text-gray-900"}`}>
-                <Globe className="w-6 h-6 text-[#3ecf8e]" />
+                <Globe className="w-6 h-6 text-green-700" />
                 Add Target Details
               </h2>
             </div>
@@ -441,7 +488,7 @@ function Dashboard() {
                     onChange={(e) => setTargetFormData({ ...targetFormData, url: e.target.value })}
                     placeholder="https://example.com"
                     required
-                    className={`w-full pl-10 pr-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition ${isDark ? "bg-[#0f1117] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
+                    className={`w-full pl-10 pr-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition ${isDark ? "bg-[#0f1117] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
                   />
                 </div>
               </div>
@@ -456,7 +503,7 @@ function Dashboard() {
                   onChange={(e) => setTargetFormData({ ...targetFormData, name: e.target.value })}
                   placeholder="e.g., Production Website"
                   required
-                  className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition ${isDark ? "bg-[#0f1117] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
+                  className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition ${isDark ? "bg-[#0f1117] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
                 />
               </div>
 
@@ -469,7 +516,7 @@ function Dashboard() {
                   onChange={(e) => setTargetFormData({ ...targetFormData, description: e.target.value })}
                   placeholder="e.g., Main payment processing system"
                   rows="3"
-                  className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition resize-none ${isDark ? "bg-[#0f1117] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
+                  className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition resize-none ${isDark ? "bg-[#0f1117] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
                 />
               </div>
 
@@ -482,7 +529,7 @@ function Dashboard() {
                   value={targetFormData.tags}
                   onChange={(e) => setTargetFormData({ ...targetFormData, tags: e.target.value })}
                   placeholder="e.g., production, critical, api"
-                  className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent transition ${isDark ? "bg-[#0f1117] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
+                  className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition ${isDark ? "bg-[#0f1117] border-[#2a2e38] text-white placeholder-gray-600" : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"}`}
                 />
               </div>
 
@@ -504,7 +551,7 @@ function Dashboard() {
                 <button
                   type="submit"
                   disabled={addingTarget}
-                  className="flex-1 px-4 py-3 bg-[#3ecf8e] text-black rounded-lg hover:bg-[#52ffb2] font-semibold transition disabled:opacity-50"
+                  className="flex-1 px-4 py-3 bg-green-700 text-white rounded-lg hover:bg-green-800 font-semibold transition disabled:opacity-50"
                 >
                   {addingTarget ? "Adding..." : "Add Target"}
                 </button>
@@ -513,7 +560,8 @@ function Dashboard() {
           </div>
         </div>
       )}
-  </div>
+    </div>
+    </Layout>
   );
 }
 

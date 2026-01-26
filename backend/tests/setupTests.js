@@ -20,6 +20,11 @@ const ensureTestDatabase = async () => {
     return;
   }
 
+  // Skip database creation for URL-based config (Supabase)
+  if (config.url || config.use_env_variable) {
+    return;
+  }
+
   const adminDatabase = config.adminDatabase || 'postgres';
   const client = new Client({
     host: config.host || '127.0.0.1',
@@ -45,12 +50,21 @@ beforeAll(async () => {
   // Delay requiring models until database definitely exists
   // eslint-disable-next-line global-require
   db = require('../models');
+  
+  // Add synchronization and make sure db is connected properly
+  if (db && db.sequelize) {
+    await db.sequelize.authenticate();
+  }
 });
 
 beforeEach(async () => {
-  await db.sequelize.sync({ force: true });
+  if (db && db.sequelize) {
+    await db.sequelize.sync({ force: true });
+  }
 });
 
 afterAll(async () => {
-  await db.sequelize.close();
+  if (db && db.sequelize) {
+    await db.sequelize.close();
+  }
 });

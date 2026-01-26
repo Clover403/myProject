@@ -47,7 +47,8 @@ exports.register = async (req, res) => {
              id: existingUser.id,
              email: existingUser.email,
              name: existingUser.name,
-             picture: existingUser.picture
+             picture: existingUser.picture,
+             role: existingUser.role
            }
         });
       }
@@ -71,6 +72,8 @@ exports.register = async (req, res) => {
       { expiresIn: '7d' }
     );
 
+    console.log('✅ User registered:', { email: newUser.email, role: newUser.role });
+
     res.status(201).json({
       success: true,
       token,
@@ -78,7 +81,8 @@ exports.register = async (req, res) => {
         id: newUser.id,
         email: newUser.email,
         name: newUser.name,
-        picture: newUser.picture
+        picture: newUser.picture,
+        role: newUser.role
       }
     });
 
@@ -124,7 +128,9 @@ exports.login = async (req, res) => {
     // Update last login
     await user.update({ lastLogin: new Date() });
 
-    res.json({
+    console.log('✅ User logged in:', { email: user.email, role: user.role });
+
+    const responseData = {
       success: true,
       token,
       user: {
@@ -132,9 +138,13 @@ exports.login = async (req, res) => {
         email: user.email,
         name: user.name,
         picture: user.picture,
-        googleId: user.googleId
+        googleId: user.googleId,
+        role: user.role
       }
-    });
+    };
+    
+    console.log('📤 Login response:', JSON.stringify(responseData, null, 2));
+    res.json(responseData);
 
   } catch (error) {
     console.error('Login error:', error);
@@ -168,7 +178,8 @@ exports.googleCallback = async (req, res) => {
         email: req.user.email,
         name: req.user.name,
         picture: req.user.picture,
-        googleId: req.user.googleId
+        googleId: req.user.googleId,
+        role: req.user.role
       }
     });
   } catch (error) {
@@ -207,7 +218,8 @@ exports.getCurrentUser = async (req, res) => {
         email: req.user.email,
         name: req.user.name,
         picture: req.user.picture,
-        googleId: req.user.googleId
+        googleId: req.user.googleId,
+        role: req.user.role
       }
     });
   } catch (error) {
@@ -232,16 +244,22 @@ exports.verifyToken = async (req, res) => {
       return res.status(401).json({ error: 'User not found' });
     }
 
-    res.json({
+    console.log('✅ Token verified for user:', { email: user.email, role: user.role });
+
+    const responseData = {
       success: true,
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
         picture: user.picture,
-        googleId: user.googleId
+        googleId: user.googleId,
+        role: user.role
       }
-    });
+    };
+    
+    console.log('📤 Sending response:', JSON.stringify(responseData, null, 2));
+    res.json(responseData);
   } catch (error) {
     console.error('Token verification error:', error);
     res.status(401).json({ error: 'Invalid token' });

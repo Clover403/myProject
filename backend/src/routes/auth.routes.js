@@ -132,7 +132,7 @@ router.post('/verify-token', async (req, res) => {
       return res.status(401).json({ error: 'User not found' });
     }
 
-    console.log('✅ Token verified for user:', user.email);
+    console.log('✅ Token verified for user:', user.email, 'role:', user.role);
     res.json({
       success: true,
       user: {
@@ -140,7 +140,8 @@ router.post('/verify-token', async (req, res) => {
         email: user.email,
         name: user.name,
         picture: user.picture,
-        googleId: user.googleId
+        googleId: user.googleId,
+        role: user.role
       }
     });
   } catch (error) {

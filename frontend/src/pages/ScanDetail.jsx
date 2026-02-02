@@ -421,16 +421,27 @@ function ScanDetail() {
             }`}
           >
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            <div>
+            <div className="flex-1">
               <div
                 className={`font-semibold ${
                   isDark ? "text-blue-200" : "text-blue-900"
                 }`}
               >
-                Scan in Progress
+                Scan in Progress {scan.progress ? `(${scan.progress}%)` : ''}
               </div>
+              
+              {/* Progress Bar */}
+              {scan.progress !== undefined && (
+                <div className="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+                    style={{ width: `${scan.progress}%` }}
+                  ></div>
+                </div>
+              )}
+              
               <div
-                className={`text-sm ${
+                className={`text-sm mt-2 ${
                   isDark ? "text-blue-300" : "text-blue-700"
                 }`}
               >

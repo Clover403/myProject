@@ -141,8 +141,8 @@ function AppContent() {
   }
 
   return (
-    <ToastProvider isDark={isDark}>
-      <Router>
+    <Router>
+      <ToastProvider isDark={isDark}>
         <SocketProvider>
           <Routes>
           {/* Public Routes */}
@@ -226,8 +226,8 @@ function AppContent() {
           <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/"} replace />} />
         </Routes>
       </SocketProvider>
+      </ToastProvider>
     </Router>
-    </ToastProvider>
   );
 }
 

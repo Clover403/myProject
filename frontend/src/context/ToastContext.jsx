@@ -6,7 +6,17 @@ const ToastContext = createContext();
 export const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) {
-    throw new Error('useToast must be used within ToastProvider');
+    console.warn('useToast must be used within ToastProvider');
+    return {
+      toast: {
+        success: () => {},
+        error: () => {},
+        warning: () => {},
+        info: () => {}
+      },
+      addToast: () => {},
+      removeToast: () => {}
+    };
   }
   return context;
 };

@@ -24,27 +24,41 @@ function ScanDetail() {
   const [loadingAI, setLoadingAI] = useState(false);
   const [realtimeUpdate, setRealtimeUpdate] = useState(null);
 
-  // Use custom hook for real-time scan monitoring
-  const { scan, isLoading, error, refresh, hasSocketConnection } = useScanRealtime(
-    id,
-    // onScanUpdate callback
-    (updatedScan) => {
-      if (updatedScan.progress !== undefined && updatedScan.status === 'scanning') {
-        setRealtimeUpdate(`Scan progress: ${updatedScan.progress}%`);
-        setTimeout(() => setRealtimeUpdate(null), 2000);
+  // Use custom hook for real-time scan monitoring with error boundaries
+  let scanHookResult;
+  try {
+    scanHookResult = useScanRealtime(
+      id,
+      // onScanUpdate callback
+      (updatedScan) => {
+        if (updatedScan.progress !== undefined && updatedScan.status === 'scanning') {
+          setRealtimeUpdate(`Scan progress: ${updatedScan.progress}%`);
+          setTimeout(() => setRealtimeUpdate(null), 2000);
+        }
+      },
+      // onScanComplete callback
+      (completedScan) => {
+        setRealtimeUpdate('✅ Scan completed! Results loaded');
+        setTimeout(() => setRealtimeUpdate(null), 3000);
+      },
+      // onScanFailed callback
+      (failedScan) => {
+        setRealtimeUpdate('❌ Scan failed');
+        setTimeout(() => setRealtimeUpdate(null), 3000);
       }
-    },
-    // onScanComplete callback
-    (completedScan) => {
-      setRealtimeUpdate('✅ Scan completed! Results loaded');
-      setTimeout(() => setRealtimeUpdate(null), 3000);
-    },
-    // onScanFailed callback
-    (failedScan) => {
-      setRealtimeUpdate('❌ Scan failed');
-      setTimeout(() => setRealtimeUpdate(null), 3000);
-    }
-  );
+    );
+  } catch (error) {
+    console.error('ScanDetail hook error:', error);
+    scanHookResult = {
+      scan: null,
+      isLoading: false,
+      error: 'Failed to initialize scan monitoring',
+      refresh: () => {},
+      hasSocketConnection: false
+    };
+  }
+
+  const { scan, isLoading, error, refresh, hasSocketConnection } = scanHookResult;
 
   const surfaceClass = isDark
     ? "bg-[#151822] border border-[#1f2330]"

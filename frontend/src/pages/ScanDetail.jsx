@@ -25,6 +25,8 @@ function ScanDetail() {
   const [aiExplanation, setAiExplanation] = useState(null);
   const [loadingAI, setLoadingAI] = useState(false);
   const [pollingInterval, setPollingInterval] = useState(null);
+  const [realtimeUpdate, setRealtimeUpdate] = useState(null);
+  const [realtimeUpdate, setRealtimeUpdate] = useState(null);
 
   const surfaceClass = isDark
     ? "bg-[#151822] border border-[#1f2330]"
@@ -41,6 +43,18 @@ function ScanDetail() {
     const handleScanUpdate = (data) => {
       console.log('🔄 Received scan update via socket:', data);
       if (data.scanId === parseInt(id)) {
+        // Show realtime update notification
+        if (data.progress !== undefined && data.status === 'scanning') {
+          setRealtimeUpdate(`Scan progress: ${data.progress}%`);
+          setTimeout(() => setRealtimeUpdate(null), 2000);
+        } else if (data.status === 'completed') {
+          setRealtimeUpdate('✅ Scan completed! Loading results...');
+          setTimeout(() => setRealtimeUpdate(null), 3000);
+        } else if (data.status === 'failed') {
+          setRealtimeUpdate('❌ Scan failed');
+          setTimeout(() => setRealtimeUpdate(null), 3000);
+        }
+
         setScan(prevScan => ({
           ...prevScan,
           status: data.status,
@@ -68,7 +82,7 @@ function ScanDetail() {
             setPollingInterval(null);
           }
           // Refresh full data to get complete results
-          setTimeout(() => fetchScanDetail(), 1000);
+          setTimeout(() => fetchScanDetail(), 1500);
         }
       }
     };
@@ -306,6 +320,22 @@ function ScanDetail() {
     <div
       className={`min-h-screen p-6 ${isDark ? "bg-[#0f1117]" : "bg-gray-50"}`}
     >
+      {/* Realtime Update Notification */}
+      {realtimeUpdate && (
+        <div className="fixed top-4 right-4 z-50 animate-pulse">
+          <div className={`px-4 py-2 rounded-lg shadow-lg border ${
+            isDark 
+              ? "bg-[#1a1d24] border-[#2a2e38] text-white" 
+              : "bg-white border-gray-200 text-gray-900"
+          }`}>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-[#3ecf8e] rounded-full animate-ping"></div>
+              <span className="text-sm font-medium">{realtimeUpdate}</span>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">

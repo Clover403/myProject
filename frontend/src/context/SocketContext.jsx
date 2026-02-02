@@ -4,6 +4,8 @@ import { useSelector } from 'react-redux';
 
 const SocketContext = createContext(null);
 
+export { SocketContext };
+
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
 
 export const SocketProvider = ({ children }) => {
@@ -162,5 +164,3 @@ export const useSocket = () => {
   }
   return context;
 };
-
-export default SocketContext;

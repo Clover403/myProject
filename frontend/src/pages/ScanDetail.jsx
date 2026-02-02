@@ -45,7 +45,6 @@ function ScanDetail() {
       setTimeout(() => setRealtimeUpdate(null), 3000);
     }
   );
-  const [realtimeUpdate, setRealtimeUpdate] = useState(null);
 
   const surfaceClass = isDark
     ? "bg-[#151822] border border-[#1f2330]"

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo, useContext } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { scanAPI, aiAPI } from "../services/api";
+import { scanAPI, aiAPI } from "../services/api.jsx";
 import Layout from "../components/Layout";
 import { useTheme } from "../context/ThemeContext";
 import { SocketContext } from "../context/SocketContext";
+import useScanRealtime from "../hooks/useScanRealtime.js";
 import {
   ArrowLeft,
   Shield,
@@ -18,14 +19,32 @@ function ScanDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isDark } = useTheme();
-  const { socket } = useContext(SocketContext);
-  const [scan, setScan] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [selectedVuln, setSelectedVuln] = useState(null);
   const [aiExplanation, setAiExplanation] = useState(null);
   const [loadingAI, setLoadingAI] = useState(false);
-  const [pollingInterval, setPollingInterval] = useState(null);
   const [realtimeUpdate, setRealtimeUpdate] = useState(null);
+
+  // Use custom hook for real-time scan monitoring
+  const { scan, isLoading, error, refresh, hasSocketConnection } = useScanRealtime(
+    id,
+    // onScanUpdate callback
+    (updatedScan) => {
+      if (updatedScan.progress !== undefined && updatedScan.status === 'scanning') {
+        setRealtimeUpdate(`Scan progress: ${updatedScan.progress}%`);
+        setTimeout(() => setRealtimeUpdate(null), 2000);
+      }
+    },
+    // onScanComplete callback
+    (completedScan) => {
+      setRealtimeUpdate('✅ Scan completed! Results loaded');
+      setTimeout(() => setRealtimeUpdate(null), 3000);
+    },
+    // onScanFailed callback
+    (failedScan) => {
+      setRealtimeUpdate('❌ Scan failed');
+      setTimeout(() => setRealtimeUpdate(null), 3000);
+    }
+  );
   const [realtimeUpdate, setRealtimeUpdate] = useState(null);
 
   const surfaceClass = isDark
@@ -36,120 +55,43 @@ function ScanDetail() {
   const subtleTextClass = isDark ? "text-gray-400" : "text-gray-500";
   const defaultTextClass = isDark ? "text-gray-300" : "text-gray-600";
 
-  useEffect(() => {
-    fetchScanDetail();
+  // Handle loading and error states
+  if (isLoading && !scan) {
+    return (
+      <Layout>
+        <div className={`min-h-screen p-6 ${isDark ? "bg-[#0f1117]" : "bg-gray-50"}`}>
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-center justify-center h-96">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3ecf8e]"></div>
+              <span className={`ml-3 ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                Loading scan details...
+              </span>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
-    // Setup socket.io listener for real-time updates
-    const handleScanUpdate = (data) => {
-      console.log('🔄 Received scan update via socket:', data);
-      if (data.scanId === parseInt(id)) {
-        // Show realtime update notification
-        if (data.progress !== undefined && data.status === 'scanning') {
-          setRealtimeUpdate(`Scan progress: ${data.progress}%`);
-          setTimeout(() => setRealtimeUpdate(null), 2000);
-        } else if (data.status === 'completed') {
-          setRealtimeUpdate('✅ Scan completed! Loading results...');
-          setTimeout(() => setRealtimeUpdate(null), 3000);
-        } else if (data.status === 'failed') {
-          setRealtimeUpdate('❌ Scan failed');
-          setTimeout(() => setRealtimeUpdate(null), 3000);
-        }
-
-        setScan(prevScan => ({
-          ...prevScan,
-          status: data.status,
-          progress: data.progress,
-          ...(data.status === 'completed' && {
-            totalVulnerabilities: data.totalVulnerabilities || 0,
-            criticalCount: data.criticalCount || 0,
-            highCount: data.highCount || 0,
-            mediumCount: data.mediumCount || 0,
-            lowCount: data.lowCount || 0,
-            virustotalVerdict: data.virustotalVerdict,
-            virustotalStats: data.virustotalStats,
-            virustotalMaliciousCount: data.virustotalMaliciousCount,
-            completedAt: data.completedAt
-          }),
-          ...(data.status === 'failed' && {
-            errorMessage: data.errorMessage
-          })
-        }));
-        
-        // If scan is completed or failed, clear polling
-        if (data.status === 'completed' || data.status === 'failed') {
-          if (pollingInterval) {
-            clearInterval(pollingInterval);
-            setPollingInterval(null);
-          }
-          // Refresh full data to get complete results
-          setTimeout(() => fetchScanDetail(), 1500);
-        }
-      }
-    };
-
-    if (socket) {
-      socket.on('scan_updated', handleScanUpdate);
-      console.log('🔗 Socket listener registered for scan_updated');
-    }
-
-    return () => {
-      if (socket) {
-        socket.off('scan_updated', handleScanUpdate);
-        console.log('🔗 Socket listener removed for scan_updated');
-      }
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-      }
-    };
-  }, [id, socket, pollingInterval]);
-
-  // Separate useEffect for polling when socket is not available or as backup
-  useEffect(() => {
-    if (!scan) return;
-
-    if (scan.status === "scanning" || scan.status === "pending") {
-      const interval = setInterval(() => {
-        console.log('🔄 Polling scan status...');
-        fetchScanStatus();
-      }, 2000); // Reduced to 2 seconds for better UX
-      
-      setPollingInterval(interval);
-      return () => {
-        clearInterval(interval);
-        setPollingInterval(null);
-      };
-    } else {
-      // Clear polling if scan is not in progress
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-        setPollingInterval(null);
-      }
-    }
-  }, [scan?.status]);
-
-  const fetchScanDetail = async () => {
-    try {
-      const response = await scanAPI.getScanById(id);
-      setScan(response.data.scan);
-    } catch (error) {
-      console.error("Failed to fetch scan:", error);
-      alert("Scan not found");
-      navigate("/scans");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchScanStatus = async () => {
-    try {
-      const response = await scanAPI.getScanStatus(id);
-      if (response.data.scan.status !== scan?.status) {
-        fetchScanDetail(); // Refresh full data when status changes
-      }
-    } catch (error) {
-      console.error("Failed to fetch scan status:", error);
-    }
-  };
+  if (error) {
+    return (
+      <Layout>
+        <div className={`min-h-screen p-6 ${isDark ? "bg-[#0f1117]" : "bg-gray-50"}`}>
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mt-20">
+              <div className={`text-red-500 mb-4`}>Error: {error}</div>
+              <button
+                onClick={() => navigate('/scans')}
+                className="px-4 py-2 bg-[#3ecf8e] text-white rounded-lg hover:bg-[#35b87d]"
+              >
+                Back to Scans
+              </button>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   const conversationId = useMemo(
     () => (scan && scan.id ? `scan-${scan.id}` : `scan-${id}`),
@@ -303,7 +245,7 @@ function ScanDetail() {
     return mapping[verdict] || mapping.unknown;
   };
 
-  if (loading) {
+  if (!scan) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>

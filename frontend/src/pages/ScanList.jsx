@@ -117,6 +117,9 @@ function ScanList() {
                   URL
                 </th>
                 <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                  Scanner
+                </th>
+                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                   Status
                 </th>
                 <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? "text-gray-400" : "text-gray-500"}`}>
@@ -133,7 +136,7 @@ function ScanList() {
             <tbody className={`divide-y ${isDark ? "divide-[#2a2e38]" : "divide-gray-200"}`}>
               {filteredScans.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className={`px-6 py-8 text-center ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                  <td colSpan="6" className={`px-6 py-8 text-center ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                     No scans found
                   </td>
                 </tr>
@@ -147,6 +150,19 @@ function ScanList() {
                       >
                         {scan.url}
                       </Link>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        scan.scannerUsed === 'virustotal' 
+                          ? (isDark ? 'bg-[#3ecf8e]/20 text-[#3ecf8e]' : 'bg-green-100 text-green-700')
+                          : scan.scannerUsed === 'zap'
+                          ? (isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-700')
+                          : (isDark ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-700')
+                      }`}>
+                        {scan.scannerUsed === 'virustotal' ? 'VT' : 
+                         scan.scannerUsed === 'zap' ? 'ZAP' : 
+                         scan.scannerUsed === 'both' ? 'Both' : '?'}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`

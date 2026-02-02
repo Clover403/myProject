@@ -1,6 +1,20 @@
 # CloverGuard - Quick Start Guide
 
+**Version 2.1.0** | **February 2026** | **Local PostgreSQL Database**
+
 ## 🚀 Starting the Application
+
+### Prerequisites Check
+```bash
+# Check PostgreSQL is running
+sudo systemctl status postgresql
+
+# Check Node.js version (should be 18+)
+node --version
+
+# Check npm version
+npm --version
+```
 
 ### Backend (Port 5000)
 ```bash
@@ -11,8 +25,16 @@ node server.js
 **Expected Output:**
 ```
 ✅ Database connected successfully
-✅ Socket.io initialized
+✅ Socket.io initialized 
 🚀 Server running on http://localhost:5000
+ API endpoints:
+   - GET  /health
+   - POST /api/scans
+   - GET  /api/scans
+   - POST /api/targets
+   - POST /api/ai/explain/:vulnerabilityId
+   - GET  /api/orders
+   - GET  /api/chat/conversations
 ```
 
 ### Frontend (Port 5173)
@@ -28,25 +50,28 @@ npm run dev
 ## 📋 Current System Status
 
 ### ✅ Backend Status
-- **Server:** Running (PID: 60209)
+- **Server:** Running with Local Database
 - **Port:** 5000
-- **Database:** Connected to Supabase
+- **Database:** PostgreSQL Local (cloverguard_local)
 - **Socket.io:** Active on ws://localhost:5000
-- **Logs:** /tmp/backend.log
+- **Environment:** Development Mode
 
 ### ✅ Frontend Status
-- **Build:** Successful
-- **Bundle Size:** 573.64 kB
-- **Dev Server:** Ready on port 5173
+- **Build:** Successful (589.77 kB)
+- **Dev Server:** Running on port 5173
+- **Vite Version:** 7.2.2
+- **React:** 18+ with modern features
 
-### ✅ Database Status
-- **Migrations:** 16/16 applied
-- **Models:** 9 loaded
-- **Status:** All synchronized
+### ✅ Database Status (Local PostgreSQL)
+- **Database:** cloverguard_local
+- **User:** clover_user
+- **Migrations:** 17/17 applied successfully
+- **Tables:** Users, Scans, Targets, Vulnerabilities, AIExplanations, Products, Orders, Conversations, Messages
+- **Seeded Data:** Admin user created
 
 ---
 
-## 🎯 New Features Implemented
+## 🎯 New Features Implemented (v2.1.0)
 
 ### Order Management System
 - **Create Orders:** Users can order services from ethical hackers
@@ -160,6 +185,9 @@ bash test-endpoints.sh
 - [ ] (As buyer) Accept work
 - [ ] Check unread message count
 - [ ] Test typing indicators
+- [ ] Test security scan with method selection (VirusTotal/ZAP)
+- [ ] Verify daily scan limit (5 scans per day)
+- [ ] Test AI explanation with token limit (2000 per day)
 
 ---
 
@@ -176,6 +204,13 @@ pkill -9 node
 
 ### Database Connection Issues
 ```bash
+# Check PostgreSQL status
+sudo systemctl status postgresql
+sudo systemctl start postgresql
+
+# Check database exists
+psql -h localhost -U clover_user -d cloverguard_local
+
 # Check migrations status
 cd backend
 npx sequelize-cli db:migrate:status
@@ -260,8 +295,8 @@ Messages (Mailbox Icon) → Chat → [Send Message]
 
 Required in `backend/.env`:
 ```bash
-# Database
-DATABASE_URL=postgresql://...
+# Database (Local PostgreSQL)
+DATABASE_URL=postgres://clover_user:clover123@localhost:5432/cloverguard_local
 
 # JWT
 JWT_SECRET=your-secret-key
@@ -269,6 +304,16 @@ JWT_SECRET=your-secret-key
 # Google OAuth
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
+
+# Gemini AI
+GEMINI_API_KEY=your-gemini-api-key
+
+# VirusTotal
+VIRUSTOTAL_API_KEY=your-virustotal-api-key
+
+# Midtrans Payment
+MIDTRANS_SERVER_KEY=your-midtrans-server-key
+MIDTRANS_CLIENT_KEY=your-midtrans-client-key
 
 # Frontend
 FRONTEND_URL=http://localhost:5173
@@ -282,15 +327,15 @@ PORT=5000
 ## 📊 Database Schema
 
 ### Key Tables
-- **users** - Authentication, roles (admin/ethack/user), job status
+- **users** - Authentication, roles (admin/ethack/user), job status, daily scan/AI limits
 - **products** - Services offered by ethical hackers
-- **orders** - Order management with status workflow
+- **orders** - Order management with status workflow and Midtrans payment
 - **conversations** - Chat conversations between 2 users
 - **messages** - Chat messages with read status
-- **scans** - Security scans
-- **targets** - Scan targets
-- **vulnerabilities** - Security vulnerabilities found
-- **aiexplanations** - AI-generated explanations
+- **scans** - Security scans (VirusTotal/OWASP ZAP with daily limits)
+- **targets** - Scan targets with URL validation
+- **vulnerabilities** - Security vulnerabilities found in scans
+- **aiexplanations** - AI-generated explanations with token tracking
 
 ### Key Relationships
 ```
@@ -321,5 +366,6 @@ Conversation ─> Messages
 ---
 
 **Last Updated:** 2026-01-24
-**Version:** 1.0.0
+**Version:** 2.1.0  
+**Database:** Local PostgreSQL  
 **Test Status:** All Clear ✅

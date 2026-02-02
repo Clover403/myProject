@@ -1,5 +1,6 @@
 import { useState, useEffect, useContext, useRef } from 'react';
 import { SocketContext } from '../context/SocketContext';
+import { useToast } from '../context/ToastContext';
 import { scanAPI } from '../services/api.jsx';
 
 /**
@@ -16,6 +17,7 @@ export const useScanRealtime = (
   onScanFailed = () => {}
 ) => {
   const { socket } = useContext(SocketContext);
+  const { toast } = useToast();
   const [scan, setScan] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -68,10 +70,25 @@ export const useScanRealtime = (
         // Call status-specific callbacks
         if (data.status === 'completed') {
           onScanComplete(updatedScan);
+          toast.success('Scan completed successfully!', {
+            title: 'Scan Complete',
+            duration: 5000
+          });
           // Refresh full data after completion
           setTimeout(() => fetchScan(), 1000);
         } else if (data.status === 'failed') {
           onScanFailed(updatedScan);
+          toast.error('Scan failed. Please try again.', {
+            title: 'Scan Failed',
+            duration: 5000
+          });
+        } else if (data.progress !== undefined && data.status === 'scanning') {
+          // Show progress toast for major milestones only
+          if (data.progress === 25 || data.progress === 50 || data.progress === 75) {
+            toast.info(`Scan progress: ${data.progress}%`, {
+              duration: 2000
+            });
+          }
         }
 
         return updatedScan;
@@ -95,11 +112,19 @@ export const useScanRealtime = (
             
             if (currentScan.status === 'completed') {
               onScanComplete(currentScan);
+              toast.success('Scan completed successfully!', {
+                title: 'Scan Complete',
+                duration: 5000
+              });
               stopPolling();
               // Refresh full data
               setTimeout(() => fetchScan(), 1000);
             } else if (currentScan.status === 'failed') {
               onScanFailed(currentScan);
+              toast.error('Scan failed. Please try again.', {
+                title: 'Scan Failed', 
+                duration: 5000
+              });
               stopPolling();
             }
           }

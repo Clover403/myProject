@@ -1,0 +1,38 @@
+                                             Table "public.Scans"
+        Column         |           Type           | Collation | Nullable |               Default               
+-----------------------+--------------------------+-----------+----------+-------------------------------------
+ id                    | integer                  |           | not null | nextval('"Scans_id_seq"'::regclass)
+ targetId              | integer                  |           |          | 
+ url                   | character varying(500)   |           | not null | 
+ scanType              | character varying(50)    |           | not null | 
+ status                | character varying(50)    |           |          | 'pending'::character varying
+ totalVulnerabilities  | integer                  |           |          | 0
+ criticalCount         | integer                  |           |          | 0
+ highCount             | integer                  |           |          | 0
+ mediumCount           | integer                  |           |          | 0
+ lowCount              | integer                  |           |          | 0
+ scanDuration          | integer                  |           |          | 
+ scannerUsed           | character varying(100)   |           |          | 'zap'::character varying
+ notes                 | text                     |           |          | 
+ errorMessage          | text                     |           |          | 
+ completedAt           | timestamp with time zone |           |          | 
+ createdAt             | timestamp with time zone |           | not null | 
+ updatedAt             | timestamp with time zone |           | not null | 
+ userId                | integer                  |           |          | 
+ totalVerdict          | character varying(100)   |           |          | 
+ totalStats            | json                     |           |          | 
+ totalMaliciousCount   | integer                  |           |          | 0
+ totalLastAnalysisDate | timestamp with time zone |           |          | 
+ totalPermalink        | character varying(500)   |           |          | 
+ progress              | integer                  |           |          | 0
+Indexes:
+    "Scans_pkey" PRIMARY KEY, btree (id)
+    "scans_created_at" btree ("createdAt")
+    "scans_status" btree (status)
+    "scans_target_id" btree ("targetId")
+Foreign-key constraints:
+    "Scans_targetId_fkey" FOREIGN KEY ("targetId") REFERENCES "Targets"(id) ON UPDATE CASCADE ON DELETE SET NULL
+    "Scans_userId_fkey" FOREIGN KEY ("userId") REFERENCES "Users"(id) ON UPDATE CASCADE ON DELETE CASCADE
+Referenced by:
+    TABLE ""Vulnerabilities"" CONSTRAINT "Vulnerabilities_scanId_fkey" FOREIGN KEY ("scanId") REFERENCES "Scans"(id) ON UPDATE CASCADE ON DELETE CASCADE
+

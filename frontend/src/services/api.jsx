@@ -47,6 +47,7 @@ export const scanAPI = {
   getScanById: (id) => api.get(`/scans/${id}`),
   getScanStatus: (id) => api.get(`/scans/${id}/status`),
   getStats: () => api.get("/scans/stats/summary"),
+  getScanUsage: () => api.get("/scans/usage"),
 
   // UPDATE
   updateNotes: (id, notes) => api.patch(`/scans/${id}/notes`, { notes }),
@@ -83,6 +84,7 @@ export const aiAPI = {
     }),
   chat: (payload, config = {}) => api.post('/ai/chat', payload, config),
   getMeta: () => api.get('/ai/meta'),
+  getUsage: () => api.get('/ai/usage'),
 };
 
 // Product API

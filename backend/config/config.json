@@ -1,32 +1,19 @@
 {
   "development": {
-    "url": "postgres://postgres.lntelebxzbkmuzccrrku:Clover%2A403@aws-1-ap-south-1.pooler.supabase.com:6543/postgres",
-    "dialect": "postgres",
-    "dialectOptions": {
-      "ssl": {
-        "require": true,
-        "rejectUnauthorized": false
-      }
-    }
+    "url": "postgres://clover_user:clover123@localhost:5432/cloverguard_local",
+    "dialect": "postgres"
   },
   "test": {
-    "url": "postgres://postgres.lntelebxzbkmuzccrrku:Clover%2A403@aws-1-ap-south-1.pooler.supabase.com:6543/postgres",
+    "url": "postgres://clover_user:clover123@localhost:5432/cloverguard_local",
     "dialect": "postgres",
-    "dialectOptions": {
-      "ssl": {
-        "require": true,
-        "rejectUnauthorized": false
-      }
-    },
     "logging": false
   },
   "production": {
-    "url": "postgres://postgres.lntelebxzbkmuzccrrku:Clover%2A403@aws-1-ap-south-1.pooler.supabase.com:6543/postgres",
+    "url": "postgres://clover_user:clover123@localhost:5432/cloverguard_local",
     "dialect": "postgres",
     "dialectOptions": {
       "ssl": {
-        "require": true,
-        "rejectUnauthorized": false
+        "require": false
       }
     }
   }

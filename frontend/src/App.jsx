@@ -28,6 +28,8 @@ import Chat from "./pages/Chat";
 import MyOrders from "./pages/MyOrders";
 import SellerOrders from "./pages/SellerOrders";
 import { SocketProvider } from "./context/SocketContext";
+import { ToastProvider } from "./context/ToastContext";
+import { useTheme } from "./context/ThemeContext";
 
 // Protected Route Component
 function ProtectedRoute({ element }) {
@@ -90,10 +92,12 @@ function EthackRoute({ element }) {
   return element;
 }
 
-function App() {
+// App Content Component to access theme context
+function AppContent() {
   const dispatch = useDispatch();
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const [initialized, setInitialized] = useState(false);
+  const { isDark } = useTheme();
 
   console.log('🎯 [App] Current user from Redux:', user);
   console.log('🎯 [App] User role from Redux:', user?.role);
@@ -137,9 +141,10 @@ function App() {
   }
 
   return (
-    <Router>
-      <SocketProvider>
-        <Routes>
+    <ToastProvider isDark={isDark}>
+      <Router>
+        <SocketProvider>
+          <Routes>
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
@@ -222,7 +227,13 @@ function App() {
         </Routes>
       </SocketProvider>
     </Router>
+    </ToastProvider>
   );
+}
+
+// Main App wrapper
+function App() {
+  return <AppContent />;
 }
 
 export default App;

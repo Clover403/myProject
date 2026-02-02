@@ -1,5 +1,6 @@
 const { Vulnerability, AIExplanation } = require('../../models');
 const aiService = require('../services/aiService');
+const aiRateLimit = require('../middleware/aiRateLimit');
 
 function buildUserSettings(req) {
   const bodySettings = req.body?.settings || {};
@@ -17,6 +18,30 @@ function buildUserSettings(req) {
 }
 
 class AIController {
+  // Get AI usage info
+  async getAIUsage(req, res) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'User authentication required' });
+      }
+
+      const usedTokens = aiRateLimit.getDailyTokenUsage(userId);
+      const limit = aiRateLimit.DAILY_TOKEN_LIMIT;
+
+      return res.json({
+        usage: {
+          used: usedTokens,
+          limit: limit,
+          remaining: Math.max(0, limit - usedTokens),
+        },
+      });
+    } catch (error) {
+      console.error('Get AI Usage Error:', error);
+      return res.status(500).json({ error: 'Failed to fetch AI usage' });
+    }
+  }
+
   // Generate AI explanation for vulnerability
   async explainVulnerability(req, res) {
     try {
@@ -76,11 +101,17 @@ class AIController {
         tokensUsed: usage.tokens?.total || 0,
       });
 
+      // Track token usage for daily limit
+      if (req.trackAITokens && usage.tokens?.total) {
+        req.trackAITokens(usage.tokens.total);
+      }
+
       return res.status(201).json({
         message: 'Explanation generated successfully',
         explanation,
         cached: false,
         usage: usage,
+        tokenUsage: req.aiTokenUsage,
       });
 
     } catch (error) {
@@ -140,10 +171,16 @@ class AIController {
         settings: userSettings,
       });
 
+      // Track token usage for daily limit
+      if (req.trackAITokens && result.usage?.tokens?.total) {
+        req.trackAITokens(result.usage.tokens.total);
+      }
+
       return res.json({
         message: 'Security advice generated successfully',
         advice: result.message.content,
         usage: result.usage,
+        tokenUsage: req.aiTokenUsage,
         scanId,
       });
 
@@ -173,10 +210,16 @@ class AIController {
         settings: userSettings,
       });
 
+      // Track token usage for daily limit
+      if (req.trackAITokens && aiResponse.usage?.tokens?.total) {
+        req.trackAITokens(aiResponse.usage.tokens.total);
+      }
+
       return res.json({
         message: aiResponse.message,
         usage: aiResponse.usage,
         context: aiResponse.context,
+        tokenUsage: req.aiTokenUsage,
       });
 
     } catch (error) {

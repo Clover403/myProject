@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useContext } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { scanAPI, aiAPI } from "../services/api";
 import Layout from "../components/Layout";
 import { useTheme } from "../context/ThemeContext";
+import { SocketContext } from "../context/SocketContext";
 import {
   ArrowLeft,
   Shield,
@@ -17,11 +18,13 @@ function ScanDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isDark } = useTheme();
+  const { socket } = useContext(SocketContext);
   const [scan, setScan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedVuln, setSelectedVuln] = useState(null);
   const [aiExplanation, setAiExplanation] = useState(null);
   const [loadingAI, setLoadingAI] = useState(false);
+  const [pollingInterval, setPollingInterval] = useState(null);
 
   const surfaceClass = isDark
     ? "bg-[#151822] border border-[#1f2330]"
@@ -34,15 +37,81 @@ function ScanDetail() {
   useEffect(() => {
     fetchScanDetail();
 
-    // Poll for scan status if still scanning
-    const interval = setInterval(() => {
-      if (scan?.status === "scanning" || scan?.status === "pending") {
-        fetchScanStatus();
+    // Setup socket.io listener for real-time updates
+    const handleScanUpdate = (data) => {
+      console.log('🔄 Received scan update via socket:', data);
+      if (data.scanId === parseInt(id)) {
+        setScan(prevScan => ({
+          ...prevScan,
+          status: data.status,
+          progress: data.progress,
+          ...(data.status === 'completed' && {
+            totalVulnerabilities: data.totalVulnerabilities || 0,
+            criticalCount: data.criticalCount || 0,
+            highCount: data.highCount || 0,
+            mediumCount: data.mediumCount || 0,
+            lowCount: data.lowCount || 0,
+            virustotalVerdict: data.virustotalVerdict,
+            virustotalStats: data.virustotalStats,
+            virustotalMaliciousCount: data.virustotalMaliciousCount,
+            completedAt: data.completedAt
+          }),
+          ...(data.status === 'failed' && {
+            errorMessage: data.errorMessage
+          })
+        }));
+        
+        // If scan is completed or failed, clear polling
+        if (data.status === 'completed' || data.status === 'failed') {
+          if (pollingInterval) {
+            clearInterval(pollingInterval);
+            setPollingInterval(null);
+          }
+          // Refresh full data to get complete results
+          setTimeout(() => fetchScanDetail(), 1000);
+        }
       }
-    }, 3000);
+    };
 
-    return () => clearInterval(interval);
-  }, [id]);
+    if (socket) {
+      socket.on('scan_updated', handleScanUpdate);
+      console.log('🔗 Socket listener registered for scan_updated');
+    }
+
+    return () => {
+      if (socket) {
+        socket.off('scan_updated', handleScanUpdate);
+        console.log('🔗 Socket listener removed for scan_updated');
+      }
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+    };
+  }, [id, socket, pollingInterval]);
+
+  // Separate useEffect for polling when socket is not available or as backup
+  useEffect(() => {
+    if (!scan) return;
+
+    if (scan.status === "scanning" || scan.status === "pending") {
+      const interval = setInterval(() => {
+        console.log('🔄 Polling scan status...');
+        fetchScanStatus();
+      }, 2000); // Reduced to 2 seconds for better UX
+      
+      setPollingInterval(interval);
+      return () => {
+        clearInterval(interval);
+        setPollingInterval(null);
+      };
+    } else {
+      // Clear polling if scan is not in progress
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+        setPollingInterval(null);
+      }
+    }
+  }, [scan?.status]);
 
   const fetchScanDetail = async () => {
     try {
@@ -267,13 +336,26 @@ function ScanDetail() {
               >
                 {scan.url}
               </p>
-              <p
-                className={`text-sm mt-1 ${
-                  isDark ? "text-gray-500" : "text-gray-500"
-                }`}
-              >
-                Scanned on {new Date(scan.createdAt).toLocaleString()}
-              </p>
+              <div className="flex items-center gap-3 mt-2">
+                <p
+                  className={`text-sm ${
+                    isDark ? "text-gray-500" : "text-gray-500"
+                  }`}
+                >
+                  Scanned on {new Date(scan.createdAt).toLocaleString()}
+                </p>
+                <span className={`px-2 py-1 text-xs rounded-full ${
+                  scan.scannerUsed === 'virustotal' 
+                    ? (isDark ? 'bg-[#3ecf8e]/20 text-[#3ecf8e]' : 'bg-green-100 text-green-700')
+                    : scan.scannerUsed === 'zap'
+                    ? (isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-700')
+                    : (isDark ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-700')
+                }`}>
+                  {scan.scannerUsed === 'virustotal' ? 'VirusTotal' : 
+                   scan.scannerUsed === 'zap' ? 'OWASP ZAP' : 
+                   scan.scannerUsed === 'both' ? 'VT + ZAP' : 'Unknown'}
+                </span>
+              </div>
             </div>
 
             <div className="flex gap-2">

@@ -142,8 +142,24 @@ class ScanController {
 
           // Update status to scanning
           console.log(`🔄 Updating scan ${scan.id} status to scanning...`);
-          const updateScanFields = (fields) =>
-            Scan.update(fields, { where: { id: scan.id } });
+          const updateScanFields = (fields) => {
+            const updatePromise = Scan.update(fields, { where: { id: scan.id } });
+            
+            // Emit socket event for progress updates
+            const io = getIO();
+            if (io && (fields.progress !== undefined || fields.status !== undefined)) {
+              io.emit('scan_updated', {
+                scanId: scan.id,
+                userId: scan.userId,
+                status: fields.status || 'scanning',
+                progress: fields.progress || scan.progress || 0,
+                ...fields
+              });
+              console.log(`📡 Emitted progress update for scan ${scan.id}: ${fields.progress || 0}%`);
+            }
+            
+            return updatePromise;
+          };
           await updateScanFields({ status: "scanning", progress: 10 });
 
           // Initialize results

@@ -2,16 +2,61 @@ const { Scan, Vulnerability, Target, AIExplanation } = require("../../models");
 const zapService = require("../services/zapService");
 const virusTotalService = require("../services/virusTotalService");
 const { Op } = require("sequelize");
+const { getIO } = require("../config/socket");
+
+// Daily scan limit per user
+const DAILY_SCAN_LIMIT = parseInt(process.env.DAILY_SCAN_LIMIT || '5', 10);
 
 class ScanController {
+  // Helper: Check daily scan limit
+  async checkDailyScanLimit(userId) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const scansToday = await Scan.count({
+      where: {
+        userId,
+        createdAt: {
+          [Op.gte]: today,
+          [Op.lt]: tomorrow,
+        },
+      },
+    });
+
+    return {
+      count: scansToday,
+      limit: DAILY_SCAN_LIMIT,
+      remaining: Math.max(0, DAILY_SCAN_LIMIT - scansToday),
+      canScan: scansToday < DAILY_SCAN_LIMIT,
+    };
+  }
+
+  // GET - Get daily scan usage
+  async getDailyScanUsage(req, res) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User authentication required" });
+      }
+
+      const usage = await this.checkDailyScanLimit(userId);
+      return res.json({ usage });
+    } catch (error) {
+      console.error("Get Daily Scan Usage Error:", error);
+      return res.status(500).json({ error: "Failed to fetch scan usage" });
+    }
+  }
+
   // CREATE - Start new scan
   async startScan(req, res) {
     try {
-      const { url, scanType, targetId } = req.body;
+      const { url, scanType, targetId, scanMethods } = req.body;
       const userId = req.user?.id;
 
       console.log('\n========== 📝 STARTING SCAN ==========');
-      console.log('📊 Request body:', { url, scanType, targetId });
+      console.log('📊 Request body:', { url, scanType, targetId, scanMethods });
       console.log('👤 User ID:', userId);
       console.log('👤 Full user object:', req.user);
 
@@ -27,6 +72,42 @@ class ScanController {
         return res.status(401).json({ error: "User authentication required" });
       }
 
+      // Check daily scan limit
+      const usageCheck = await this.checkDailyScanLimit(userId);
+      if (!usageCheck.canScan) {
+        console.log('❌ Daily scan limit reached');
+        return res.status(429).json({
+          error: `Daily scan limit reached. You have used ${usageCheck.count}/${usageCheck.limit} scans today.`,
+          usage: usageCheck,
+        });
+      }
+
+      // Validate scan methods - default to virustotal only
+      const methods = scanMethods || { virustotal: true, owaspzap: false };
+      
+      // OWASP ZAP is disabled during demo period
+      if (methods.owaspzap && !methods.virustotal) {
+        console.log('❌ OWASP ZAP only scan not allowed during demo');
+        return res.status(400).json({
+          error: "OWASP ZAP scanning is currently disabled during demo period. Please select VirusTotal or wait until ZAP is enabled.",
+          demoMode: true,
+        });
+      }
+
+      // If both selected, only use VirusTotal (ZAP disabled)
+      const effectiveMethods = {
+        virustotal: methods.virustotal || true,
+        owaspzap: false, // Always disabled during demo
+      };
+
+      // Determine scanner used for record
+      let scannerUsed = 'virustotal';
+      if (effectiveMethods.owaspzap && effectiveMethods.virustotal) {
+        scannerUsed = 'both';
+      } else if (effectiveMethods.owaspzap) {
+        scannerUsed = 'zap';
+      }
+
       // Create scan record - fix by ensuring all fields are properly set
       const scanData = {
         url: url.trim(),
@@ -35,7 +116,7 @@ class ScanController {
         userId: parseInt(userId),
         status: "pending",
         progress: 0,
-        scannerUsed: "zap",
+        scannerUsed: scannerUsed,
         totalVulnerabilities: 0,
         criticalCount: 0,
         highCount: 0,
@@ -53,7 +134,7 @@ class ScanController {
       console.log('✅ Scan User ID:', scan.userId);
       console.log('========== SCAN CREATION SUCCESS ==========\n');
 
-      // Start scan asynchronously
+      // Start scan asynchronously (VirusTotal only during demo)
       (async () => {
         try {
           console.log(`🔄 Starting async scan process for scan ID ${scan.id}`);
@@ -65,18 +146,39 @@ class ScanController {
             Scan.update(fields, { where: { id: scan.id } });
           await updateScanFields({ status: "scanning", progress: 10 });
 
-          // Perform ZAP scan
-          console.log(`🔍 Starting ZAP scan for URL: ${url}`);
-          const scanResults = await zapService.performFullScan(url);
-          await updateScanFields({ progress: 55 });
+          // Initialize results
+          let scanResults = {
+            totalVulnerabilities: 0,
+            criticalCount: 0,
+            highCount: 0,
+            mediumCount: 0,
+            lowCount: 0,
+            vulnerabilities: [],
+          };
+          let vtSummary = null;
 
-          // Run VirusTotal analysis (best effort)
+          // DEMO MODE: Only VirusTotal is enabled
+          // ZAP scan is disabled
+          console.log(`ℹ️ DEMO MODE: OWASP ZAP scan is disabled`);
+          await updateScanFields({ progress: 30 });
+
+          // Run VirusTotal analysis
           console.log(`🧪 Checking VirusTotal reputation for: ${url}`);
-          const vtSummary = await virusTotalService.scanUrl(url);
+          vtSummary = await virusTotalService.scanUrl(url);
           if (vtSummary?.error) {
             console.warn(`⚠️ VirusTotal returned an error: ${vtSummary.error}`);
           } else if (vtSummary) {
             console.log('✅ VirusTotal summary received:', vtSummary);
+            
+            // Convert VirusTotal results to vulnerability format
+            if (vtSummary.maliciousCount > 0) {
+              scanResults.criticalCount = vtSummary.maliciousCount;
+              scanResults.totalVulnerabilities += vtSummary.maliciousCount;
+            }
+            if (vtSummary.suspiciousCount > 0) {
+              scanResults.mediumCount = vtSummary.suspiciousCount;
+              scanResults.totalVulnerabilities += vtSummary.suspiciousCount;
+            }
           } else {
             console.log('ℹ️ No VirusTotal summary available for this URL.');
           }
@@ -137,6 +239,19 @@ class ScanController {
             }
           );
 
+          // Emit socket event for real-time updates
+          const io = getIO();
+          if (io) {
+            io.emit('scan_updated', {
+              scanId: scan.id,
+              userId: scan.userId,
+              status: 'completed',
+              progress: 100,
+              ...updatePayload
+            });
+            console.log(`📡 Emitted scan_updated event for scan ${scan.id}`);
+          }
+
           console.log(`✅ Scan ${scan.id} updated. Rows affected:`, updateResult[0]);
 
           // Save vulnerabilities
@@ -168,6 +283,19 @@ class ScanController {
               }
             );
             console.log(`✅ Scan ${scan.id} marked as failed`);
+            
+            // Emit socket event for failed scan
+            const io = getIO();
+            if (io) {
+              io.emit('scan_updated', {
+                scanId: scan.id,
+                userId: scan.userId,
+                status: 'failed',
+                progress: 100,
+                errorMessage: error.message
+              });
+              console.log(`📡 Emitted scan_updated event for failed scan ${scan.id}`);
+            }
           } catch (updateError) {
             console.error(`❌ Failed to update scan status:`, updateError.message);
           }

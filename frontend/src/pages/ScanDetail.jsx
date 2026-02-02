@@ -327,12 +327,26 @@ function ScanDetail() {
                    scan.scannerUsed === 'zap' ? 'OWASP ZAP' : 
                    scan.scannerUsed === 'both' ? 'VT + ZAP' : 'Unknown'}
                 </span>
+                
+                {/* Real-time Connection Status */}
+                {(scan.status === 'pending' || scan.status === 'scanning') && (
+                  <div className="flex items-center gap-1">
+                    <div className={`w-2 h-2 rounded-full ${
+                      hasSocketConnection 
+                        ? "bg-green-400 animate-pulse" 
+                        : "bg-yellow-400 animate-pulse"
+                    }`}></div>
+                    <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                      {hasSocketConnection ? 'Live Updates' : 'Polling'}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="flex gap-2">
               <button
-                onClick={fetchScanDetail}
+                onClick={refresh}
                 className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
                   isDark
                     ? "bg-[#1f2330] text-gray-200 hover:bg-[#262b3a]"

@@ -99,26 +99,18 @@ function AppContent() {
   const [initialized, setInitialized] = useState(false);
   const { isDark } = useTheme();
 
-  console.log('🎯 [App] Current user from Redux:', user);
-  console.log('🎯 [App] User role from Redux:', user?.role);
-
   useEffect(() => {
-    // HANYA verify token SEKALI saat app pertama kali dimuat
+    // Verify token once when app loads
     const initAuth = async () => {
       const storedToken = localStorage.getItem('authToken');
       
-      console.log('🔑 [App] Stored token exists:', !!storedToken);
-      console.log('👤 [App] Current user in state:', user);
-      
-      // Jika ada token dan belum punya data user, verify
+      // If token exists and no user data, verify
       if (storedToken && !user) {
-        console.log('🔍 Verifying stored token on app init...');
         try {
-          const resultAction = await dispatch(verifyToken(storedToken)).unwrap();
-          console.log('✅ [App] Token verified, user data:', resultAction);
+          await dispatch(verifyToken(storedToken)).unwrap();
         } catch (error) {
-          console.error('❌ Token verification failed:', error);
-          // Token invalid, hapus dari localStorage
+          console.error('Token verification failed:', error);
+          // Invalid token, remove from localStorage
           localStorage.removeItem('authToken');
         }
       }

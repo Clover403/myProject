@@ -25,18 +25,18 @@ export const SocketProvider = ({ children }) => {
       });
 
       newSocket.on('connect', () => {
-        console.log('✅ Socket connected');
+        // Socket connected
         setConnected(true);
       });
 
       newSocket.on('disconnect', () => {
-        console.log('❌ Socket disconnected');
+        // Socket disconnected
         setConnected(false);
       });
 
       // Listen for message notifications
       newSocket.on('message_notification', (data) => {
-        console.log('📩 New message notification:', data);
+        // New message notification
         setUnreadMessages(prev => prev + 1);
         setNotifications(prev => [...prev, {
           type: 'message',
@@ -47,7 +47,7 @@ export const SocketProvider = ({ children }) => {
 
       // Listen for order notifications
       newSocket.on('order_notification', (data) => {
-        console.log('📦 Order notification:', data);
+        // Order notification
         setNotifications(prev => [...prev, {
           type: 'order',
           ...data,
@@ -57,7 +57,7 @@ export const SocketProvider = ({ children }) => {
 
       // Listen for order updates
       newSocket.on('order_update', (order) => {
-        console.log('📦 Order update:', order);
+        // Order update
         setNotifications(prev => [...prev, {
           type: 'order_update',
           order,

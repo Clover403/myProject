@@ -4,7 +4,7 @@ import { scanAPI, aiAPI } from "../services/api.jsx";
 import Layout from "../components/Layout";
 import { useTheme } from "../context/ThemeContext";
 import { SocketContext } from "../context/SocketContext";
-import useScanRealtime from "../hooks/useScanRealtime.js";
+import { useScanRealtime } from "../hooks/useScanRealtime.js";
 import {
   ArrowLeft,
   Shield,
@@ -24,41 +24,29 @@ function ScanDetail() {
   const [loadingAI, setLoadingAI] = useState(false);
   const [realtimeUpdate, setRealtimeUpdate] = useState(null);
 
-  // Use custom hook for real-time scan monitoring with error boundaries
-  let scanHookResult;
-  try {
-    scanHookResult = useScanRealtime(
-      id,
-      // onScanUpdate callback
-      (updatedScan) => {
-        if (updatedScan.progress !== undefined && updatedScan.status === 'scanning') {
-          setRealtimeUpdate(`Scan progress: ${updatedScan.progress}%`);
-          setTimeout(() => setRealtimeUpdate(null), 2000);
-        }
-      },
-      // onScanComplete callback
-      (completedScan) => {
-        setRealtimeUpdate('✅ Scan completed! Results loaded');
-        setTimeout(() => setRealtimeUpdate(null), 3000);
-      },
-      // onScanFailed callback
-      (failedScan) => {
-        setRealtimeUpdate('❌ Scan failed');
-        setTimeout(() => setRealtimeUpdate(null), 3000);
+  // ALWAYS call hooks in same order - no try-catch around hooks!
+  const scanRealtimeHook = useScanRealtime(
+    id,
+    // onScanUpdate callback
+    (updatedScan) => {
+      if (updatedScan.progress !== undefined && updatedScan.status === 'scanning') {
+        setRealtimeUpdate(`Scan progress: ${updatedScan.progress}%`);
+        setTimeout(() => setRealtimeUpdate(null), 2000);
       }
-    );
-  } catch (error) {
-    console.error('ScanDetail hook error:', error);
-    scanHookResult = {
-      scan: null,
-      isLoading: false,
-      error: 'Failed to initialize scan monitoring',
-      refresh: () => {},
-      hasSocketConnection: false
-    };
-  }
+    },
+    // onScanComplete callback
+    (completedScan) => {
+      setRealtimeUpdate('✅ Scan completed! Results loaded');
+      setTimeout(() => setRealtimeUpdate(null), 3000);
+    },
+    // onScanFailed callback
+    (failedScan) => {
+      setRealtimeUpdate('❌ Scan failed');
+      setTimeout(() => setRealtimeUpdate(null), 3000);
+    }
+  );
 
-  const { scan, isLoading, error, refresh, hasSocketConnection } = scanHookResult;
+  const { scan, isLoading, error, refresh, hasSocketConnection } = scanRealtimeHook || {};
 
   const surfaceClass = isDark
     ? "bg-[#151822] border border-[#1f2330]"
@@ -68,44 +56,7 @@ function ScanDetail() {
   const subtleTextClass = isDark ? "text-gray-400" : "text-gray-500";
   const defaultTextClass = isDark ? "text-gray-300" : "text-gray-600";
 
-  // Handle loading and error states
-  if (isLoading && !scan) {
-    return (
-      <Layout>
-        <div className={`min-h-screen p-6 ${isDark ? "bg-[#0f1117]" : "bg-gray-50"}`}>
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-center justify-center h-96">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3ecf8e]"></div>
-              <span className={`ml-3 ${isDark ? "text-gray-300" : "text-gray-600"}`}>
-                Loading scan details...
-              </span>
-            </div>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  if (error) {
-    return (
-      <Layout>
-        <div className={`min-h-screen p-6 ${isDark ? "bg-[#0f1117]" : "bg-gray-50"}`}>
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mt-20">
-              <div className={`text-red-500 mb-4`}>Error: {error}</div>
-              <button
-                onClick={() => navigate('/scans')}
-                className="px-4 py-2 bg-[#3ecf8e] text-white rounded-lg hover:bg-[#35b87d]"
-              >
-                Back to Scans
-              </button>
-            </div>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
+  // ALWAYS call useMemo hooks BEFORE any early returns
   const conversationId = useMemo(
     () => (scan && scan.id ? `scan-${scan.id}` : `scan-${id}`),
     [scan, id]
@@ -156,6 +107,108 @@ function ScanDetail() {
       "Create a checklist to validate remediation after fixes.",
     ];
   }, [scan]);
+
+  // Handle loading and error states
+  if (isLoading && !scan) {
+    return (
+      <Layout>
+        <div className={`min-h-screen p-6 ${isDark ? "bg-[#0f1117]" : "bg-gray-50"}`}>
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-center justify-center h-96">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3ecf8e]"></div>
+              <span className={`ml-3 ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                Loading scan details...
+              </span>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Check if scan ID is provided AFTER all hooks are called
+  if (!id) {
+    return (
+      <Layout>
+        <div className={`min-h-screen p-6 ${isDark ? "bg-[#0f1117]" : "bg-gray-50"}`}>
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mt-20">
+              <div className={`p-8 rounded-xl ${surfaceClass}`}>
+                <AlertTriangle size={48} className="text-red-500 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold mb-4">Invalid Scan ID</h2>
+                <p className={`mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  No scan ID provided in the URL.
+                </p>
+                <button
+                  onClick={() => navigate('/scans')}
+                  className="px-6 py-3 bg-[#3ecf8e] text-white rounded-lg hover:bg-[#35b87d] transition-colors"
+                >
+                  Back to Scans
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className={`min-h-screen p-6 ${isDark ? "bg-[#0f1117]" : "bg-gray-50"}`}>
+          <div className="max-w-7xl mx-auto">
+            {/* Back Button */}
+            <button
+              onClick={() => navigate('/scans')}
+              className={`mb-6 flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                isDark
+                  ? "bg-[#1f2330] text-gray-300 hover:bg-[#2a2f3f]"
+                  : "bg-white text-gray-700 hover:bg-gray-50 border"
+              }`}
+            >
+              <ArrowLeft size={16} />
+              Back to Scans
+            </button>
+
+            <div className="text-center mt-20">
+              <div className={`p-8 rounded-xl ${surfaceClass}`}>
+                <div className="text-red-500 mb-4 text-lg">
+                  <AlertTriangle size={48} className="mx-auto mb-4" />
+                  {error.includes('404') || error.includes('not found') ? 'Scan Not Found' : 'Error Loading Scan'}
+                </div>
+                <p className={`mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  {error.includes('404') || error.includes('not found') 
+                    ? `Scan with ID "${id}" was not found. It may have been deleted or you don't have permission to view it.`
+                    : `Failed to load scan details: ${error}`
+                  }
+                </p>
+                <div className="space-x-4">
+                  <button
+                    onClick={() => navigate('/scans')}
+                    className="px-6 py-3 bg-[#3ecf8e] text-white rounded-lg hover:bg-[#35b87d] transition-colors"
+                  >
+                    Back to Scans
+                  </button>
+                  <button
+                    onClick={refresh}
+                    className={`px-6 py-3 rounded-lg border transition-colors ${
+                      isDark
+                        ? "border-gray-600 text-gray-300 hover:bg-[#1f2330]"
+                        : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    <RefreshCw size={16} className="inline mr-2" />
+                    Try Again
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   const handleDelete = async () => {
     if (!window.confirm("Are you sure you want to delete this scan?")) {

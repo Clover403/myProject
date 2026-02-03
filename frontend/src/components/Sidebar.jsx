@@ -44,8 +44,8 @@ function Sidebar() {
 
   // Navigation items based on role
   const getNavigationItems = () => {
-    console.log('🔍 [Sidebar] Getting navigation items for user:', user?.email, 'role:', user?.role);
-    console.log('🔍 [Sidebar] User object:', JSON.stringify(user, null, 2));
+    // Getting navigation items for user
+    // User object loaded
     
     const baseItems = [
       { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
@@ -72,7 +72,7 @@ function Sidebar() {
       : [{ label: "My Orders", path: "/my-orders", icon: ShoppingBag }];
 
     if (user?.role === "admin") {
-      console.log('👑 [Sidebar] Rendering ADMIN navigation');
+      // Rendering ADMIN navigation
       return [
         ...baseItems,
         { type: "divider", label: "Marketplace" },
@@ -86,7 +86,7 @@ function Sidebar() {
     }
 
     if (user?.role === "ethack") {
-      console.log('🛡️ [Sidebar] Rendering ETHACK navigation');
+      // Rendering ETHACK navigation
       return [
         ...baseItems,
         { type: "divider", label: "Marketplace" },
@@ -98,7 +98,7 @@ function Sidebar() {
       ];
     }
 
-    console.log('👤 [Sidebar] Rendering USER (default) navigation');
+    // Rendering USER (default) navigation
     return [
       ...baseItems,
       { type: "divider", label: "Marketplace" },
@@ -233,8 +233,8 @@ function Sidebar() {
               </p>
               <p className={`text-xs truncate ${textMuted}`}>
                 {(() => {
-                  console.log('🎭 [Sidebar Badge] user.role:', user.role);
-                  console.log('🎭 [Sidebar Badge] Checking: admin?', user.role === "admin", 'ethack?', user.role === "ethack");
+                  // Role check
+                  // Role validation
                   if (user.role === "admin") return "Administrator";
                   if (user.role === "ethack") return "Ethical Hacker";
                   return "User";

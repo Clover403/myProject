@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext, useRef } from 'react';
 import { SocketContext } from '../context/SocketContext';
-import { useToast } from '../context/ToastContext';
+import { ToastContext } from '../context/ToastContext';
 import { scanAPI } from '../services/api.jsx';
 
 /**
@@ -17,19 +17,20 @@ export const useScanRealtime = (
   onScanFailed = () => {}
 ) => {
   const { socket } = useContext(SocketContext);
-  
-  // Safe toast usage with error handling
-  let toast = null;
-  try {
-    toast = useToast();
-  } catch (error) {
-    console.warn('Toast context not available:', error);
-  }
   const [scan, setScan] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const pollingIntervalRef = useRef(null);
   const socketListenerRef = useRef(null);
+  
+  // Safe toast usage - ALWAYS call useContext in same order
+  const toastContext = useContext(ToastContext);
+  const toast = toastContext?.toast || { 
+    success: () => {}, 
+    error: () => {},
+    warning: () => {},
+    info: () => {} 
+  };
 
   // Fetch scan data
   const fetchScan = async () => {
@@ -47,9 +48,8 @@ export const useScanRealtime = (
 
   // Socket.io event handler
   const handleScanUpdate = (data) => {
-    console.log('🔄 Real-time scan update:', data);
-    
-    if (data.scanId === parseInt(scanId)) {
+    try {
+      if (data.scanId === parseInt(scanId)) {
       setScan(prevScan => {
         const updatedScan = {
           ...prevScan,
@@ -71,39 +71,65 @@ export const useScanRealtime = (
           })
         };
 
-        // Call update callback
-        onScanUpdate(updatedScan);
-
-        // Call status-specific callbacks
-        if (data.status === 'completed') {
-          onScanComplete(updatedScan);
-          if (toast) {
-            toast.success('Scan completed successfully!', {
-              title: 'Scan Complete',
-              duration: 5000
-            });
+        // Call update callback safely
+        try {
+          if (onScanUpdate && typeof onScanUpdate === 'function') {
+            onScanUpdate(updatedScan);
           }
-          // Refresh full data after completion
-          setTimeout(() => fetchScan(), 1000);
+        } catch (error) {
+          console.error('Error in onScanUpdate callback:', error);
+        }
+
+        // Call status-specific callbacks safely
+        if (data.status === 'completed') {
+          try {
+            if (onScanComplete && typeof onScanComplete === 'function') {
+              onScanComplete(updatedScan);
+            }
+            // Safe toast call
+            if (toast && typeof toast.success === 'function') {
+              toast.success('Scan completed successfully!', {
+                title: 'Scan Complete',
+                duration: 5000
+              });
+            }
+            // Refresh full data after completion
+            setTimeout(() => fetchScan(), 1000);
+          } catch (error) {
+            console.error('Error in onScanComplete callback:', error);
+          }
         } else if (data.status === 'failed') {
-          onScanFailed(updatedScan);
-          if (toast) {
-            toast.error('Scan failed. Please try again.', {
-              title: 'Scan Failed',
-              duration: 5000
-            });
+          try {
+            if (onScanFailed && typeof onScanFailed === 'function') {
+              onScanFailed(updatedScan);
+            }
+            // Safe toast call
+            if (toast && typeof toast.error === 'function') {
+              toast.error('Scan failed. Please try again.', {
+                title: 'Scan Failed',
+                duration: 5000
+              });
+            }
+          } catch (error) {
+            console.error('Error in onScanFailed callback:', error);
           }
         } else if (data.progress !== undefined && data.status === 'scanning') {
           // Show progress toast for major milestones only
-          if (toast && (data.progress === 25 || data.progress === 50 || data.progress === 75)) {
-            toast.info(`Scan progress: ${data.progress}%`, {
-              duration: 2000
-            });
+          if (data.progress === 25 || data.progress === 50 || data.progress === 75) {
+            // Safe toast call with extra checks
+            if (toast && typeof toast.info === 'function') {
+              toast.info(`Scan progress: ${data.progress}%`, {
+                duration: 2000
+              });
+            }
           }
         }
 
         return updatedScan;
       });
+      }
+    } catch (error) {
+      console.error('Error handling scan update:', error);
     }
   };
 
@@ -118,12 +144,12 @@ export const useScanRealtime = (
         
         setScan(prevScan => {
           if (!prevScan || prevScan.status !== currentScan.status || prevScan.progress !== currentScan.progress) {
-            console.log('📊 Polling update:', currentScan);
             onScanUpdate(currentScan);
             
             if (currentScan.status === 'completed') {
               onScanComplete(currentScan);
-              if (toast) {
+              // Safe toast call
+              if (toast && typeof toast.success === 'function') {
                 toast.success('Scan completed successfully!', {
                   title: 'Scan Complete',
                   duration: 5000
@@ -134,7 +160,8 @@ export const useScanRealtime = (
               setTimeout(() => fetchScan(), 1000);
             } else if (currentScan.status === 'failed') {
               onScanFailed(currentScan);
-              if (toast) {
+              // Safe toast call
+              if (toast && typeof toast.error === 'function') {
                 toast.error('Scan failed. Please try again.', {
                   title: 'Scan Failed', 
                   duration: 5000
@@ -150,15 +177,12 @@ export const useScanRealtime = (
         console.error('Polling error:', err);
       }
     }, 2000);
-    
-    console.log('🔄 Started polling for scan', scanId);
   };
 
   const stopPolling = () => {
     if (pollingIntervalRef.current) {
       clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = null;
-      console.log('⏹️ Stopped polling for scan', scanId);
     }
   };
 
@@ -167,7 +191,6 @@ export const useScanRealtime = (
     if (socket && !socketListenerRef.current) {
       socket.on('scan_updated', handleScanUpdate);
       socketListenerRef.current = true;
-      console.log('🔗 Socket listener registered for scan_updated');
     }
   };
 
@@ -175,13 +198,17 @@ export const useScanRealtime = (
     if (socket && socketListenerRef.current) {
       socket.off('scan_updated', handleScanUpdate);
       socketListenerRef.current = false;
-      console.log('🔗 Socket listener removed for scan_updated');
+
     }
   };
 
   // Main effect
   useEffect(() => {
-    if (!scanId) return;
+    if (!scanId) {
+      setIsLoading(false);
+      setError('No scan ID provided');
+      return;
+    }
 
     // Initial fetch
     fetchScan();

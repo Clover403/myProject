@@ -3,6 +3,9 @@ import { CheckCircle, AlertCircle, XCircle, Info } from 'lucide-react';
 
 const ToastContext = createContext();
 
+// Export ToastContext for direct usage
+export { ToastContext };
+
 export const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) {
